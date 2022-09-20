@@ -5,7 +5,7 @@ from lib.scene import PreGameScene
 class Game:
     def __init__(self):
         pg.init()
-        self.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
+        self.screen = pg.display.set_mode((800, 800),)
         pg.display.set_caption("DodgeGame")
         self.clock = pg.time.Clock()
         self.finished = False
@@ -17,7 +17,7 @@ class Game:
         while not self.finished:
             self.clock.tick(60)
             events = pg.event.get()
-            if pg.QUIT in events:
+            if pg.QUIT in [event.type for event in events]:
                 break
             
             if not self.game:
@@ -33,3 +33,6 @@ class Game:
             
         
         pg.quit()
+
+if __name__ == "__main__":
+    Game().start()

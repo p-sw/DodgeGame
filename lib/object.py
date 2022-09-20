@@ -23,27 +23,27 @@ class Color:
         return (self.r, self.g, self.b)
 
     def __add__(self, other):
-        if other.isinstance(Color):
+        if isinstance(other, Color):
             return Color(self.r + other.r, self.g + other.g, self.b + other.b)
-        elif other.isinstance(tuple):
+        elif isinstance(other, tuple):
             return Color(self.r + other[0], self.g + other[1], self.b + other[2])
-        elif other.isinstance(int):
+        elif isinstance(other, int):
             return Color(self.r + other, self.g + other, self.b + other)
-        elif other.isinstance(list):
+        elif isinstance(other, list):
             return Color(self.r + other[0], self.g + other[1], self.b + other[2])
-        elif other.isinstance(dict):
+        elif isinstance(other, dict):
             return Color(self.r + other['r'], self.g + other['g'], self.b + other['b'])
     
     def __sub__(self, other):
-        if other.isinstance(Color):
+        if isinstance(other, Color):
             return Color(self.r - other.r, self.g - other.g, self.b - other.b)
-        elif other.isinstance(tuple):
+        elif isinstance(other, tuple):
             return Color(self.r - other[0], self.g - other[1], self.b - other[2])
-        elif other.isinstance(int):
+        elif isinstance(other, int):
             return Color(self.r - other, self.g - other, self.b - other)
-        elif other.isinstance(list):
+        elif isinstance(other, list):
             return Color(self.r - other[0], self.g - other[1], self.b - other[2])
-        elif other.isinstance(dict):
+        elif isinstance(other, dict):
             return Color(self.r - other['r'], self.g - other['g'], self.b - other['b'])
     
 class Colors:
@@ -58,13 +58,24 @@ class Colors:
     PURPLE = Color(128, 0, 128)
 
 class Text(pg.sprite.Sprite):
-    def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable, frame_event:callable=None):
+    def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable=None, frame_event:callable=None):
         super().__init__()
-        self.image = font.render(text, antialias=True, color=color)
-        self.rect = self.image.get_rect(center=center)
+        self.image = pg.Surface(font.size(text), pg.SRCALPHA, 32)
+        self.image = self.image.convert_alpha()
+        self.text = font.render(text, True, color.as_iter())  # text, antialiasing, color
+        self.rect = self.image.get_rect()
+        if center:
+            self.rect.centerx = center[0]
+            self.rect.centery = center[1]
+            self.center = center
+        else:
+            self.center = None
         self.frame_event = frame_event
     
     def render(self, surface:pg.Surface):
+        self.image.blit(self.text, (0, 0))
+        if not self.center:
+            self.rect = self.image.get_rect(center=surface.get_rect().center)
         surface.blit(self.image, self.rect)
     
     def update(self, events):
@@ -74,7 +85,7 @@ class Text(pg.sprite.Sprite):
 class Button(pg.sprite.Sprite):
     def __init__(self, size:Iterable, center:Iterable, colors:Iterable[Color], text:Text, click_event:callable=None):
         super().__init__()
-        self.image = pg.Surface(0, 0, size[0], size[1])
+        self.image = pg.Surface((size[0], size[1]))
         self.image.fill(colors[0].as_iter())
         self.rect = self.image.get_rect(center=center)
         # #

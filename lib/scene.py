@@ -17,20 +17,26 @@ class Scene:
     def update(self, events):
         for groups in self.groups.values():
             groups.update(events)
+    
+    def render(self, screen):
+        for groups in self.groups.values():
+            for item in groups:
+                item.render(screen)
 
 class PreGameScene(Scene):
     def __init__(self, gameObject):
+        super().__init__()
         self.screen_color = Colors.WHITE.as_iter()
         
-        title_font = pg.font.Font('assets/fonts/BlackHanSans-Regular.ttf', 40)
-        button_font = pg.font.Font('assets/fonts/BlackHanSans-Regular.ttf', 20)
+        title_font = pg.font.Font('assets/font/BlackHanSans-Regular.ttf', 40)
+        button_font = pg.font.Font('assets/font/BlackHanSans-Regular.ttf', 20)
         self.title = Text("부평고 2022 코딩동아리", title_font, Color(0, 0, 0), (400, 100))
         self.create_group("title", self.title)
         
         BUTTON_COLOR = [
             Colors.ORANGE,
             Colors.RED,
-            Colors.red - Color(100, 0, 0)
+            Colors.RED - Color(100, 0, 0)
         ]
         
         def start_event():
@@ -44,14 +50,14 @@ class PreGameScene(Scene):
             (200, 50),
             (400, 300),
             BUTTON_COLOR,
-            Text("시작하기", button_font, Colors.WHITE, (200, 50)),
+            Text("시작하기", button_font, Colors.WHITE),
             start_event
         )
         self.quit_button = Button(
             (200, 50),
             (400, 600),
             BUTTON_COLOR,
-            Text("종료하기", button_font, Colors.WHITE, (200, 50)),
+            Text("종료하기", button_font, Colors.WHITE),
             quit_event
         )
         self.create_group("buttons", self.start_button, self.quit_button)
