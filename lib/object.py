@@ -169,7 +169,7 @@ class Player(pg.sprite.Sprite):
             self.rect.x += speed
 
 class Enemy(pg.sprite.Sprite):
-    def __init__(self, x_change, y_change, target_pos, start_x: bool, start_full: bool, screen_size: int, color:Color=Colors.RED):
+    def __init__(self, x_change, y_change, target_pos, start_x: bool, start_y: bool, screen_size: int, color:Color=Colors.RED):
         super().__init__()
         self.image = pg.Surface((10, 10))
         self.image.fill(color.as_iter())
@@ -188,14 +188,14 @@ class Enemy(pg.sprite.Sprite):
         y_function = lambda y: (y - target_pos[1]) / self.tilt + target_pos[0]
         
         if start_x:
-            if start_full:
+            if start_y:
                 start_pos = (screen_size[0], x_function(screen_size[0]))
                 self.x_change = -self.x_change
                 self.y_change = -self.y_change
             else:
                 start_pos = (0, x_function(0))
         else:
-            if start_full:
+            if start_y:
                 start_pos = (y_function(screen_size[1]), screen_size[1])
                 self.x_change = -self.x_change
                 self.y_change = -self.y_change
