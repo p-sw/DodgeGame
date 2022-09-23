@@ -9,6 +9,9 @@ from lib.object import Player, Enemy
 
 BASEDIR = Path(__file__).parent.parent.absolute()
 
+def font_located(fontname):
+    return path.join((BASEDIR, 'assets', 'font', fontname+'.ttf'))
+
 class Scene:
     def __init__(self):
         self.groups = {}
@@ -44,8 +47,8 @@ class MenuScene(Scene):
         super().__init__()
         self.screen_color = Colors.WHITE.as_iter()
         
-        title_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 40)
-        button_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'ONE Mobile Bold.ttf'), 30)
+        title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
+        button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
         title = Text("부평고 2022 코딩동아리 게임", 
                      title_font, 
                      Colors.ORANGE,
@@ -94,7 +97,7 @@ class GameScene(Scene):
         self.player = Player((gameObject.screen.get_width() // 2, gameObject.screen.get_height() // 2), Colors.BLUE)
         self.create_group("player", self.player)
         
-        self.score_display_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'INVASION2000.ttf'), 60)
+        self.score_display_font = pg.font.Font(font_located('INVASION2000'), 60)
         self.score_displayer = self.score_display_font.render("0", True, Colors.ORANGE.as_iter())
         self.add_raw_item(self.score_displayer, (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 8),"score_displayer")
         
@@ -175,11 +178,11 @@ class ResultScene(Scene):
         self.anim_current_elapsed_time = 0
         self.anim_current_total_score = 0
         
-        button_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'ONE Mobile Bold.ttf'), 30)
+        button_font = pg.font.Font(font_located('One Mobile Bold'), 30)
         
         title = Text(
             "Game Over", 
-            pg.font.Font('assets/font/BlackHanSans-Regular.ttf', 40), 
+            pg.font.Font(font_located('BlackHanSans-Regular'), 40), 
             Colors.ORANGE, 
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 5),
             TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2)))
@@ -191,10 +194,10 @@ class ResultScene(Scene):
             Colors.RED - Color(100, 0, 0)
         ]
         
-        self.score_displayer_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'INVASION2000.ttf'), 40)
+        self.score_displayer_font = pg.font.Font(font_located('INVASION2000'), 40)
         self.score_displayer = self.score_displayer_font.render(str(self.score), True, Colors.ORANGE.as_iter())
         
-        self.score_comment_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 40)
+        self.score_comment_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
         self.score_comment_overall = self.score_comment_font.render("총 점수", True, (Colors.RED - Color(50, 0, 0)).as_iter())
         self.score_comment_time = self.score_comment_font.render("시간 점수", True, (Colors.RED - Color(50, 0, 0)).as_iter())
         self.score_comment_barely_missed = self.score_comment_font.render("액션 점수", True, (Colors.RED - Color(50, 0, 0)).as_iter())
