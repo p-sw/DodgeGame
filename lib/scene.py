@@ -74,6 +74,7 @@ class GameScene(Scene):
         self.score = 0
         self.summon_count = 0
         self.last_summon_time = 0
+        self.lower_limit = 50
         
         self.target_x_range = 50  # * 2
         self.target_y_range = 50  # * 2
@@ -83,13 +84,34 @@ class GameScene(Scene):
     def update(self, events):
         elapsed_time = pg.time.get_ticks() - self.started_time
         
-        if pg.sprite.groupcollide(self.groups["player"], self.groups["enemy"], True, False):
-            self.game.change_scene("result", ResultScene, self.inherit_groups("enemy"))
+        def hit_test(item, offset):
+            return self.player.mask.overlap(item.mask, offset)
+        
+        def normal_hit(item):
+            self.player.set_test_hitbox("normal_hitbox")
+            return hit_test(item, (self.player.rect.x - item.rect.x,
+                             self.player.rect.y - item.rect.y))
+        
+        def point_hit(item):
+            self.player.set_test_hitbox("point_hitbox")
+            return hit_test(item, (((self.player.rect.x - (self.player.point_hitbox_expand_x / 2)) -item.rect.x),
+                                   ((self.player.rect.y - (self.player.point_hitbox_expand_y / 2)) - item.rect.y)))
+        
+        for item in self.groups["enemy"].sprites():
+            self.player.set_test_hitbox("normal_hitbox")
+            if normal_hit(item):
+                self.player.kill()
+                self.game.change_scene("result", ResultScene)
+            elif point_hit(item):
+                print("score up")
+        
+        # if pg.sprite.groupcollide(self.groups["player"], self.groups["enemy"], True, False):
+        #    self.game.change_scene("result", ResultScene, self.inherit_groups("enemy"))
         
         enemy_summon_delay_pattern = lambda x: -0.000001 * (x ** 2) + 500
         summon_delay = enemy_summon_delay_pattern(elapsed_time)
-        if summon_delay <= 50:
-            summon_delay = 50
+        if summon_delay <= self.lower_limit:
+            summon_delay = self.lower_limit
         print(f"elapsed: {elapsed_time}, summon: {self.last_summon_time+summon_delay}, delay: {summon_delay}", end="\r")
         
         if elapsed_time > self.last_summon_time + summon_delay:
@@ -111,6 +133,7 @@ class GameScene(Scene):
 
 class ResultScene(Scene):
     def __init__(self, gameObject, inheritGroups):
+        self.scene_start_time = pg.time.get_ticks()
         self.screen_color = Colors.WHITE.as_iter()
         self.groups = inheritGroups
         
@@ -148,3 +171,10 @@ class ResultScene(Scene):
         )
         
         self.create_group("buttons", RestartBtn, MenuBtn, QuitBtn)
+        
+        
+    
+    def update(self, events):
+        
+        
+        return super().update(events)

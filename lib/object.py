@@ -2,6 +2,13 @@ from typing import Iterable
 from random import randint
 import pygame as pg
 
+class Hitbox(pg.mask.Mask):
+    def get_relative_path(self, other_hitbox: pg.mask.Mask):
+        return (self.get_rect().x - other_hitbox.get_rect().x, self.get_rect().y - other_hitbox.get_rect().y)
+    
+    def hit_test(self, other_hitbox, offset=(0, 0)):
+        return self.overlap(other_hitbox, offset)
+
 class Color:
     def __init__(self, r, g, b):
         if r > 255:
@@ -22,6 +29,9 @@ class Color:
     
     def as_iter(self):
         return (self.r, self.g, self.b)
+
+    def as_color(self):
+        return pg.Color(self.r, self.g, self.b)
 
     def __add__(self, other):
         if isinstance(other, Color):
@@ -140,13 +150,36 @@ class Player(pg.sprite.Sprite):
     def __init__(self, center, color:Color=Colors.BLUE):
         super().__init__()
         self.image = pg.Surface((10, 10))
+        self.image.set_colorkey(Colors.GREEN.as_color())
+        self.normal_hitbox_set_x = 10
+        self.normal_hitbox_set_y = 10
+        self.point_hitbox_expand_x = 20
+        self.point_hitbox_expand_y = 20
+        
+        normal_hitbox = pg.mask.from_surface(self.image)
+        point_hitbox = pg.mask.from_surface(self.image)
+        point_hitbox.fill()
+        
+        self.hitboxes = {
+            "normal_hitbox": normal_hitbox.scale((self.normal_hitbox_set_x, self.normal_hitbox_set_y)),
+            "point_hitbox": point_hitbox.scale((self.normal_hitbox_set_x + self.point_hitbox_expand_x, 
+                                                self.normal_hitbox_set_y + self.point_hitbox_expand_y))
+        }
+        
         self.image.fill(color.as_iter())
         self.rect = self.image.get_rect(center=center)
         self.speed = 3
         self.speed_diag = self.speed / (2**(1/2))
     
+    def set_test_hitbox(self, hitbox_name):
+        self.mask = self.hitboxes[hitbox_name]
+    
     def render(self, surface:pg.Surface):
         surface.blit(self.image, self.rect)
+        # Hitbox Visualization for debugging
+        # surface.blit(self.hitboxes["point_hitbox"].to_surface(setcolor=Colors.GREEN.as_iter()), (self.rect.topleft[0]-(self.point_hitbox_expand_x/2), 
+        #                                                                                          self.rect.topleft[1]-(self.point_hitbox_expand_y/2)))
+        # surface.blit(self.hitboxes["normal_hitbox"].to_surface(setcolor=Colors.RED.as_iter()), self.rect)
     
     def update(self, events):
         keys = pg.key.get_pressed()
@@ -172,6 +205,8 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self, x_change, y_change, target_pos, start_x: bool, start_y: bool, screen_size: int, color:Color=Colors.RED):
         super().__init__()
         self.image = pg.Surface((10, 10))
+        self.image.set_colorkey(Colors.GREEN.as_color())
+        self.mask = pg.mask.from_surface(self.image)
         self.image.fill(color.as_iter())
         self.change_multiply = 2
         
@@ -203,6 +238,8 @@ class Enemy(pg.sprite.Sprite):
                 start_pos = (y_function(0), 0)
         
         self.rect = self.image.get_rect(center=start_pos)
+        
+        self.counted = False
     
     def f(self, x):
         return self.tilt * (x - self.target_pos[0]) + self.target_pos[1]
