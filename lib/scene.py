@@ -109,9 +109,6 @@ class GameScene(Scene):
                 item.counted = True
                 self.score += 1
         
-        # if pg.sprite.groupcollide(self.groups["player"], self.groups["enemy"], True, False):
-        #    self.game.change_scene("result", ResultScene, self.inherit_groups("enemy"))
-        
         enemy_summon_delay_pattern = lambda x: -0.000005 * (x ** 2) + 500
         summon_delay = enemy_summon_delay_pattern(elapsed_time)
         if summon_delay <= self.lower_limit:
