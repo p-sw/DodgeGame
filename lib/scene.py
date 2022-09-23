@@ -1,10 +1,13 @@
 from typing import Iterable
 from random import randint
-from math import log
+from pathlib import Path
+from os import path
 import pygame as pg
 
 from lib.object import Text, Color, Button, Colors, ButtonEvent
 from lib.object import Player, Enemy
+
+BASEDIR = Path(__file__).parent.parent.absolute()
 
 class Scene:
     def __init__(self):
@@ -34,8 +37,8 @@ class MenuScene(Scene):
         super().__init__()
         self.screen_color = Colors.WHITE.as_iter()
         
-        title_font = pg.font.Font('assets/font/BlackHanSans-Regular.ttf', 40)
-        button_font = pg.font.Font('assets/font/BlackHanSans-Regular.ttf', 20)
+        title_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 40)
+        button_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 20)
         title = Text("부평고 2022 코딩동아리", title_font, Color(0, 0, 0), (400, 100))
         self.create_group("title", title)
         
