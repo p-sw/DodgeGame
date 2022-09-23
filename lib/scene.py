@@ -101,9 +101,10 @@ class GameScene(Scene):
             self.player.set_test_hitbox("normal_hitbox")
             if normal_hit(item):
                 self.player.kill()
-                self.game.change_scene("result", ResultScene)
-            elif point_hit(item):
-                print("score up")
+                self.game.change_scene("result", ResultScene, self.inherit_groups("enemy"))
+            elif point_hit(item) and not item.counted:
+                item.counted = True
+                self.score += 1
         
         # if pg.sprite.groupcollide(self.groups["player"], self.groups["enemy"], True, False):
         #    self.game.change_scene("result", ResultScene, self.inherit_groups("enemy"))
