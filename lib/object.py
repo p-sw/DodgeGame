@@ -76,6 +76,7 @@ class Text(pg.sprite.Sprite):
     def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable=None, text_shadow:TextShadowEffect=None, frame_event:callable=None):
         super().__init__()
         self.image = pg.Surface(font.size(text) if not text_shadow else text_shadow.size_with_offset(font.size(text)), pg.SRCALPHA, 32)
+        # self.image = self.image.convert_alpha()
         self.font = font
         self.color = color
         self.text = font.render(text, True, color.as_iter())
