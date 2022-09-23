@@ -304,25 +304,29 @@ class ResultScene(Scene):
 class HowToPlayScene(Scene):
     def __init__(self, gameObject, data):
         super().__init__()
+        self.screen_color = Colors.WHITE.as_iter()
         
         BUTTON_COLOR = [
             Colors.ORANGE,
             Colors.RED,
             Colors.RED - Color(100, 0, 0)
         ]
+        button_font = pg.font.Font(font_located('ONE Mobile Bold'), 20)
         
         self.prevButton = Button((100, 25), 
                                  (80, gameObject.screen.get_height() - 80), 
                                  BUTTON_COLOR, 
-                                 "이전", 
-                                 ButtonEvent(self, lambda howtoscene: howtoscene.page_prev()))
+                                 Text("이전", button_font, Colors.WHITE), 
+                                 ButtonEvent(self, lambda howtoscene: howtoscene.prev_page()))
         self.nextButton = Button((100, 25), (gameObject.screen.get_width() - 80, gameObject.screen.get_height() - 80),
                                  BUTTON_COLOR,
-                                 "다음",
+                                 Text("다음", button_font, Colors.WHITE),
                                  ButtonEvent(self, lambda howtoscene: howtoscene.next_page()))
-        self.create_group("buttons", self.prevButton, self.nextButton)
-        self.create_group("start_buttons", self.nextButton)
-        self.create_group("end_buttons", self.prevButton)
+        self.quitHelpButton = Button((100, 25), 
+                                     (gameObject.screen.get_width()-100, 50), 
+                                     BUTTON_COLOR, 
+                                     Text("메뉴로", button_font, Colors.WHITE), 
+                                     ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("menu", MenuScene)))
         
         self.page = 0
         
@@ -338,11 +342,11 @@ class HowToPlayScene(Scene):
                 },
                 {
                     "type": "text",
-                    "value": Text("이 게임은 파란색 네모를 움직여", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (100, 80), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("이 게임은 파란색 네모를 움직여", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (210, 150), TextShadowEffect(Colors.BLACK, (2,2))),
                 },
                 {
                     "type": "text",
-                    "value": Text("빨간색 네모를 피하는 게임입니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (100, 110), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("빨간색 네모를 피하는 게임입니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (220, 220), TextShadowEffect(Colors.BLACK, (2,2))),
                 }
             ],
             [
@@ -352,11 +356,11 @@ class HowToPlayScene(Scene):
                 },
                 {
                     "type": "text",
-                    "value": Text("W, A, S, D키로 움직입니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (gameObject.screen.get_width() / 2 - 100, 80), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("W, A, S, D키로 움직입니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (190, 150), TextShadowEffect(Colors.BLACK, (2,2))),
                 },
                 {
                     "type": "text",
-                    "value": Text("LSHIFT 키를 눌러 빠르게 움직일 수 있습니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (gameObject.screen.get_width() / 2 - 100, 110), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("LSHIFT 키를 눌러 더욱 빠르게 움직일 수 있습니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (330, 220), TextShadowEffect(Colors.BLACK, (2,2))),
                 }
             ],
             [
@@ -366,37 +370,53 @@ class HowToPlayScene(Scene):
                 },
                 {
                     "type": "text",
-                    "value": Text("기본적으로 MS 단위로 시간을 재 점수를 측정합니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (gameObject.screen.get_width() / 2 - 100, 80), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("MS 단위로 시간을 재 점수를 측정합니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (270, 150), TextShadowEffect(Colors.BLACK, (2,2))),
                 },
                 {
                     "type": "text",
-                    "value": Text("빨간색 네모를 피하면 점수가 잘 올라갑니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (gameObject.screen.get_width() / 2 - 100, 110), TextShadowEffect(Colors.BLACK, (2,2))),
+                    "value": Text("시간은 가장 기본적인 점수입니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (220, 220), TextShadowEffect(Colors.BLACK, (2,2))),
+                },
+                {
+                    "type": "text",
+                    "value": Text("빨간색 네모를 피하면 점수가 잘 올라갑니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (280, 330), TextShadowEffect(Colors.BLACK, (2,2))),
+                },
+                {
+                    "type": "text",
+                    "value": Text("그것을 \"액션 점수\"라고 합니다.", self.fonts["content"], Colors.BLACK + Color(100, 100, 100), (200, 400), TextShadowEffect(Colors.BLACK, (2,2))),
                 }
             ]
         ]
+        self.current_page_elements = []
+        self.create_group("currentPageElements")
         
     def update(self, events):
         super().update(events)
-        for group in self.groups:
-            if group != "buttons" or group != "start_buttons" or group != "end_buttons":
-                del self.groups[group]
-            if self.page == 1:
-                del self.groups["end_buttons"]
-                del self.groups["buttons"]
-            elif self.page >= len(self.page_elements):
-                del self.groups["start_buttons"]
-                del self.groups["buttons"] 
-        for element in self.page_elements[self.page]:
-            if element["type"] == "raw":
-                self.add_raw_item(element["value"], element["position"], element["name"])
+        if not self.current_page_elements:
+            # init groups
+            if "startPageButtons" in self.groups:
+                del self.groups["startPageButtons"]
+            if "middlePageButtons" in self.groups:
+                del self.groups["middlePageButtons"]
+            if "endPageButtons" in self.groups:
+                del self.groups["endPageButtons"]
+            
+            if self.page == 0:
+                self.create_group("startPageButtons", [self.nextButton, self.quitHelpButton])
+            elif self.page == len(self.page_elements) - 1:
+                self.create_group("endPageButtons", [self.prevButton, self.quitHelpButton])
             else:
-                if element["group_name"] not in self.groups:
-                    self.create_group(f"page_{self.page}", element["value"])
-                else:
-                    self.add_item(f"page_{self.page}", element["value"])
+                self.create_group("middlePageButtons", [self.prevButton, self.nextButton, self.quitHelpButton])
+                    
+            for element in self.page_elements[self.page]:
+                self.add_item("currentPageElements", element["value"])
+                
     
     def prev_page(self):
         self.page -= 1
+        self.current_page_elements = []
+        self.groups["currentPageElements"].empty()
     
     def next_page(self):
         self.page += 1
+        self.current_page_elements = []
+        self.groups["currentPageElements"].empty()
