@@ -282,4 +282,3 @@ class ResultScene(Scene):
         self.raws["score_splitted_time"][0] = self.score_displayer_font.render(f"{self.anim_current_elapsed_time}", True, Colors.ORANGE.as_iter())
         
         self.raws["score_splitted_barely_missed"][0] = self.score_displayer_font.render(f"{self.anim_current_score}", True, Colors.ORANGE.as_iter())
-                    
