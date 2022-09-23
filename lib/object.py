@@ -2,13 +2,6 @@ from typing import Iterable
 from random import randint
 import pygame as pg
 
-class Hitbox(pg.mask.Mask):
-    def get_relative_path(self, other_hitbox: pg.mask.Mask):
-        return (self.get_rect().x - other_hitbox.get_rect().x, self.get_rect().y - other_hitbox.get_rect().y)
-    
-    def hit_test(self, other_hitbox, offset=(0, 0)):
-        return self.overlap(other_hitbox, offset)
-
 class Color:
     def __init__(self, r, g, b):
         if r > 255:
@@ -170,6 +163,8 @@ class Player(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center=center)
         self.speed = 3
         self.speed_diag = self.speed / (2**(1/2))
+        self.update_per_second = 80
+        self.last_update_time = pg.time.get_ticks()
     
     def set_test_hitbox(self, hitbox_name):
         self.mask = self.hitboxes[hitbox_name]
@@ -182,6 +177,9 @@ class Player(pg.sprite.Sprite):
         # surface.blit(self.hitboxes["normal_hitbox"].to_surface(setcolor=Colors.RED.as_iter()), self.rect)
     
     def update(self, events):
+        if pg.time.get_ticks() - self.last_update_time < 1000 / self.update_per_second:
+            return
+        self.last_update_time = pg.time.get_ticks()
         keys = pg.key.get_pressed()
         if ((not keys[pg.K_w] and keys[pg.K_s]) or (keys[pg.K_w] and not keys[pg.K_s])) \
             and ((not keys[pg.K_a] and keys[pg.K_d]) or (keys[pg.K_a] and not keys[pg.K_d])):
@@ -240,11 +238,17 @@ class Enemy(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center=start_pos)
         
         self.counted = False
+        
+        self.last_update_time = pg.time.get_ticks()
+        self.update_per_second = 60
     
     def f(self, x):
         return self.tilt * (x - self.target_pos[0]) + self.target_pos[1]
     
     def update(self, events):
+        if pg.time.get_ticks() - self.last_update_time < 1000 / self.update_per_second:
+            return
+        self.last_update_time = pg.time.get_ticks()
         self.rect.x += self.x_change * self.change_multiply
         self.rect.y += self.y_change * self.change_multiply
     

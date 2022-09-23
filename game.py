@@ -26,7 +26,6 @@ class Game:
     def start(self):
         while not self.finished:
             self.time = pg.time.get_ticks()
-            self.clock.tick(60)
             events = EventWrapper(pg.event.get())
             
             if pg.QUIT in events:
