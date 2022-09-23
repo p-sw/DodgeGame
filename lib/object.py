@@ -26,6 +26,9 @@ class Color:
     def as_color(self):
         return pg.Color(self.r, self.g, self.b)
 
+    def reverse(self):
+        return Color(255 - self.r, 255 - self.g, 255 - self.b)
+
     def __add__(self, other):
         if isinstance(other, Color):
             return Color(self.r + other.r, self.g + other.g, self.b + other.b)
@@ -60,13 +63,24 @@ class Colors:
     YELLOW = Color(255, 255, 0)
     CYAN = Color(0, 255, 255)
     PURPLE = Color(128, 0, 128)
+    
+class TextShadowEffect:
+    def __init__(self, color_offset: Color, pos_offset: tuple):
+        self.color = color_offset.reverse()
+        self.offset = pos_offset
+    
+    def size_with_offset(self, origin_size):
+        return (origin_size[0]+abs(self.offset[0]), origin_size[1]+abs(self.offset[1]))
 
 class Text(pg.sprite.Sprite):
-    def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable=None, frame_event:callable=None):
+    def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable=None, text_shadow:TextShadowEffect=None, frame_event:callable=None):
         super().__init__()
-        self.image = pg.Surface(font.size(text), pg.SRCALPHA, 32)
+        self.image = pg.Surface(font.size(text) if not text_shadow else text_shadow.size_with_offset(font.size(text)), pg.SRCALPHA, 32)
         self.image = self.image.convert_alpha()
         self.text = font.render(text, True, color.as_iter())
+        self.text_rect = self.text.get_rect()
+        self.text_shadow = None if not text_shadow else font.render(text, True, (color - text_shadow.color).as_iter())
+        self.text_shadow_rect = None if not text_shadow else self.text_shadow.get_rect()
         self.rect = self.image.get_rect()
         if center:
             self.rect.centerx = center[0]
@@ -75,9 +89,34 @@ class Text(pg.sprite.Sprite):
         else:
             self.center = None
         self.frame_event = frame_event
+        
+        if self.text_shadow:
+            if text_shadow.offset[0] > 0:
+                self.text_rect.x = 0
+                self.text_shadow_rect.x = self.rect.width - self.text_shadow_rect.width
+            elif text_shadow.offset[0] < 0:
+                self.text_rect.x = self.rect.width - self.text_rect.width
+                self.text_shadow_rect.x = 0
+            elif text_shadow.offset[0] == 0:
+                self.text_rect.x = 0
+                self.text_shadow_rect.x = 0
+            if text_shadow.offset[1] > 0:
+                self.text_rect.y = 0
+                self.text_shadow_rect.y = self.rect.height - self.text_shadow_rect.height
+            elif text_shadow.offset[1] < 0:
+                self.text_rect.y = self.rect.height - self.text_rect.height
+                self.text_shadow_rect.y = 0
+            elif text_shadow.offset[1] == 0:
+                self.text_rect.y = 0
+                self.text_shadow_rect.y = 0
+        else:
+            self.text_rect.x = 0
+            self.text_rect.y = 0
     
     def render(self, surface:pg.Surface):
-        self.image.blit(self.text, (0, 0))
+        if self.text_shadow:
+            self.image.blit(self.text_shadow, self.text_shadow_rect)
+        self.image.blit(self.text, self.text_rect)
         if not self.center:
             self.rect = self.image.get_rect(center=surface.get_rect().center)
         surface.blit(self.image, self.rect)

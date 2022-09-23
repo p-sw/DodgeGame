@@ -4,7 +4,7 @@ from pathlib import Path
 from os import path
 import pygame as pg
 
-from lib.object import Text, Color, Button, Colors, ButtonEvent
+from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect
 from lib.object import Player, Enemy
 
 BASEDIR = Path(__file__).parent.parent.absolute()
@@ -38,8 +38,15 @@ class MenuScene(Scene):
         self.screen_color = Colors.WHITE.as_iter()
         
         title_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 40)
-        button_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'BlackHanSans-Regular.ttf'), 20)
-        title = Text("부평고 2022 코딩동아리", title_font, Color(0, 0, 0), (400, 100))
+        button_font = pg.font.Font(path.join(BASEDIR, 'assets', 'font', 'ONE Mobile Bold.ttf'), 20)
+        title = Text("부평고 2022 코딩동아리 게임", 
+                     title_font, 
+                     Colors.ORANGE, 
+                     (
+                        gameObject.screen.get_width() / 2, 
+                        gameObject.screen.get_height() / 6
+                     ), 
+                     TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2)))
         self.create_group("title", title)
         
         BUTTON_COLOR = [
@@ -50,14 +57,20 @@ class MenuScene(Scene):
         
         start_button = Button(
             (200, 50),
-            (400, 400),
+            (
+                gameObject.screen.get_width() / 2,
+                gameObject.screen.get_height() / 8 * 5 - 40
+            ),
             BUTTON_COLOR,
             Text("시작하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("game", GameScene))
         )
         quit_button = Button(
             (200, 50),
-            (400, 500),
+            (
+                gameObject.screen.get_width() / 2,
+                gameObject.screen.get_height() / 8 * 5 + 40
+            ),
             BUTTON_COLOR,
             Text("종료하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())

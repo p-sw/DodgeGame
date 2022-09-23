@@ -16,7 +16,7 @@ class Game:
     def __init__(self):
         pg.init()
         self.time = pg.time.get_ticks()
-        self.screen = pg.display.set_mode((800, 800),)
+        self.screen = pg.display.set_mode((800, 800))
         pg.display.set_caption("DodgeGame")
         self.clock = pg.time.Clock()
         self.finished = False
