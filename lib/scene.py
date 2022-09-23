@@ -10,6 +10,7 @@ from lib.object import Player, Enemy
 BASEDIR = Path(__file__).parent.parent.absolute()
 
 def font_located(fontname):
+    # return f'assets/font/{fontname}.ttf'
     return path.join((BASEDIR, 'assets', 'font', fontname+'.ttf'))
 
 class Scene:
