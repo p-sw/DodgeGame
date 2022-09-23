@@ -38,8 +38,8 @@ class Game:
             pg.display.flip()
         pg.quit()
     
-    def change_scene(self, status, sceneObjClass, inheritGroups={}):
-        self.scene = sceneObjClass(self, inheritGroups)
+    def change_scene(self, status, sceneObjClass, datas={}):
+        self.scene = sceneObjClass(self, datas)
         self.scene_status = status
     
     def quit(self):

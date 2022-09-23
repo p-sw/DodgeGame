@@ -76,9 +76,11 @@ class Text(pg.sprite.Sprite):
     def __init__(self, text:str, font:pg.font.Font, color:Color, center:Iterable=None, text_shadow:TextShadowEffect=None, frame_event:callable=None):
         super().__init__()
         self.image = pg.Surface(font.size(text) if not text_shadow else text_shadow.size_with_offset(font.size(text)), pg.SRCALPHA, 32)
-        self.image = self.image.convert_alpha()
+        self.font = font
+        self.color = color
         self.text = font.render(text, True, color.as_iter())
         self.text_rect = self.text.get_rect()
+        self.text_shadow_obj = text_shadow
         self.text_shadow = None if not text_shadow else font.render(text, True, (color - text_shadow.color).as_iter())
         self.text_shadow_rect = None if not text_shadow else self.text_shadow.get_rect()
         self.rect = self.image.get_rect()
@@ -125,6 +127,11 @@ class Text(pg.sprite.Sprite):
         if self.frame_event:
             self.frame_event(events)
             
+    def set_text(self, text):
+        self.text = self.font.render(text, True, self.color.as_iter())
+        self.text_shadow = None if not self.text_shadow_obj else self.font.render(text, True, (self.color - self.text_shadow_obj.color).as_iter())
+        self.rect.width = self.font.size(text)[0] if not self.text_shadow_obj else self.text_shadow_obj.size_with_offset(self.font.size(text))[0]
+        self.rect.height = self.font.size(text)[1] if not self.text_shadow_obj else self.text_shadow_obj.size_with_offset(self.font.size(text))[1]
             
 class ButtonEvent:
     def __init__(self, gameObject, callback):
@@ -239,7 +246,7 @@ class Player(pg.sprite.Sprite):
             self.rect.x += speed
 
 class Enemy(pg.sprite.Sprite):
-    def __init__(self, x_change, y_change, target_pos, start_x: bool, start_y: bool, screen_size: int, color:Color=Colors.RED):
+    def __init__(self, x_change, y_change, target_pos, start_x: bool, start_full: bool, screen_size: int, color:Color=Colors.RED):
         super().__init__()
         self.image = pg.Surface((10, 10))
         self.image.set_colorkey(Colors.GREEN.as_color())
@@ -256,23 +263,27 @@ class Enemy(pg.sprite.Sprite):
             
         self.tilt = self.y_change / self.x_change
         
-        x_function = lambda x: self.tilt * (x - target_pos[0]) + target_pos[1]
-        y_function = lambda y: (y - target_pos[1]) / self.tilt + target_pos[0]
+        self.x_function = lambda x: self.tilt * (x - target_pos[0]) + target_pos[1]
+        self.y_function = lambda y: (y - target_pos[1]) / self.tilt + target_pos[0]
         
         if start_x:
-            if start_y:
-                start_pos = (screen_size[0], x_function(screen_size[0]))
+            if start_full:
+                start_pos = (screen_size[0], self.x_function(screen_size[0]))
+                self.end_pos = (0, self.x_function(0))
                 self.x_change = -self.x_change
                 self.y_change = -self.y_change
             else:
-                start_pos = (0, x_function(0))
+                start_pos = (0, self.x_function(0))
+                self.end_pos = (screen_size[0], self.x_function(screen_size[0]))
         else:
-            if start_y:
-                start_pos = (y_function(screen_size[1]), screen_size[1])
+            if start_full:
+                start_pos = (self.y_function(screen_size[1]), screen_size[1])
+                self.end_pos = (self.y_function(0), 0)
                 self.x_change = -self.x_change
                 self.y_change = -self.y_change
             else:
-                start_pos = (y_function(0), 0)
+                start_pos = (self.y_function(0), 0)
+                self.end_pos = (self.y_function(screen_size[1]), screen_size[1])
         
         self.rect = self.image.get_rect(center=start_pos)
         
@@ -290,6 +301,9 @@ class Enemy(pg.sprite.Sprite):
         self.last_update_time = pg.time.get_ticks()
         self.rect.x += self.x_change * self.change_multiply
         self.rect.y += self.y_change * self.change_multiply
+        if (self.rect.x, self.rect.y) == self.end_pos:
+            self.kill()
+            
     
     def render(self, surface:pg.Surface):
         surface.blit(self.image, self.rect)
