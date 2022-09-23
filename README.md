@@ -1,3 +1,4 @@
 # TODO
-- Player Outscreen block
-- Enemy creation delay low_limit
+- Score calculation
+- Score element in result scene
+- Backend API to save score datas
