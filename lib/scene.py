@@ -121,7 +121,7 @@ class MenuGameTransition(Scene):
         for name, group in self.groups.copy().items():
             if not group:
                 del self.groups[name]
-        if not self.groups:
+        if "title" not in (keys:=self.groups.keys()) and "buttons" not in keys:
             if self.transitionFinishedTime == None:
                 self.transitionFinishedTime = pg.time.get_ticks()
             elif pg.time.get_ticks() - self.transitionFinishedTime > self.transitionFinishDelay:
