@@ -21,7 +21,7 @@ class Game:
         self.clock = pg.time.Clock()
         self.finished = False
         
-        self.change_scene("menu", MenuScene)
+        self.change_scene(MenuScene)
     
     def start(self):
         while not self.finished:
@@ -38,9 +38,8 @@ class Game:
             pg.display.flip()
         pg.quit()
     
-    def change_scene(self, status, sceneObjClass, datas={}):
+    def change_scene(self, sceneObjClass, datas={}):
         self.scene = sceneObjClass(self, datas)
-        self.scene_status = status
     
     def quit(self):
         self.finished = True

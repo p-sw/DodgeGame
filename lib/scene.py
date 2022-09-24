@@ -77,7 +77,7 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("시작하기", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("game", GameScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene))
         ),
         help_button = Button(
             (200, 50),
@@ -87,7 +87,7 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("도움말", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("HowTo", HowToPlayScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(HowToPlayScene))
         )
         quit_button = Button(
             (200, 50),
@@ -150,7 +150,7 @@ class GameScene(Scene):
             self.player.set_test_hitbox("normal_hitbox")
             if normal_hit(item):
                 self.player.kill()
-                self.game.change_scene("result", ResultScene, {"inheritGroups": self.inherit_groups("enemy"), "elapsedTime": elapsed_time, "score": self.score, "totalScore": elapsed_time + self.score})
+                self.game.change_scene(ResultScene, {"inheritGroups": self.inherit_groups("enemy"), "elapsedTime": elapsed_time, "score": self.score, "totalScore": elapsed_time + self.score})
             elif point_hit(item) and not item.counted:
                 item.counted = True
                 self.score += 2000
@@ -245,7 +245,7 @@ class ResultScene(Scene):
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 8 * 5 - 40),
             BUTTON_COLOR,
             Text("다시하기", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("game", GameScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene))
         )
         
         self.MenuBtn = Button(
@@ -253,7 +253,7 @@ class ResultScene(Scene):
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 8 * 5 + 40),
             BUTTON_COLOR,
             Text("메뉴로", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("menu", MenuScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene))
         )
         
         self.QuitBtn = Button(
@@ -331,7 +331,7 @@ class HowToPlayScene(Scene):
                                      (gameObject.screen.get_width()-100, 50), 
                                      BUTTON_COLOR, 
                                      Text("메뉴로", button_font, Colors.WHITE), 
-                                     ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene("menu", MenuScene)))
+                                     ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene)))
         
         self.page = 0
         
