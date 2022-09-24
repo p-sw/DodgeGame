@@ -49,7 +49,7 @@ class Scene:
 class MenuScene(Scene):
     def __init__(self, gameObject, data):
         super().__init__()
-        self.screen_color = Colors.WHITE.as_iter()
+        self.screen_color = Colors.BLACK.as_iter()
         
         title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
         button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
@@ -101,12 +101,17 @@ class MenuScene(Scene):
         )
         self.create_group("buttons", start_button, help_button, quit_button)
 
+class MenuGameTransition(Scene):
+    def __init__(self, gameObject, data):
+        super().__init__()
+        self.groups = data["inheritGroups"]
+
 class GameScene(Scene):
     def __init__(self, gameObject, data):
         self.game = gameObject
         super().__init__()
         self.started_time = pg.time.get_ticks()
-        self.screen_color = Colors.WHITE.as_iter()
+        self.screen_color = Colors.BLACK.as_iter()
         
         self.player = Player((gameObject.screen.get_width() // 2, gameObject.screen.get_height() // 2), Colors.BLUE)
         self.create_group("player", self.player)
@@ -180,7 +185,7 @@ class ResultScene(Scene):
         super().__init__()
         self.scene_start_time = pg.time.get_ticks()
         self.last_update_time = self.scene_start_time
-        self.screen_color = Colors.WHITE.as_iter()
+        self.screen_color = Colors.BLACK.as_iter()
         self.groups = data["inheritGroups"]
         self.screen = gameObject.screen
         
