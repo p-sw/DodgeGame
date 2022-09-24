@@ -313,7 +313,11 @@ class ResultScene(Scene):
         
         self.animation_finished = False
         self.score_time_animation_finished = False
+        self.score_time_animation_finished_time = None
         self.score_barely_missed_animation_finished = False
+        self.score_barely_missed_animation_finished_time = None
+        
+        self.score_time_animation_finish_delay = 300
         
         self.RestartBtn = Button(
             (200, 50),
@@ -374,6 +378,7 @@ class ResultScene(Scene):
                     if from_last_time >= self.score_animation_time_delay:
                         if self.anim_current_elapsed_time + self.score_animation_time_chunk > self.elapsed_time:
                             self.score_time_animation_finished = True
+                            self.score_time_animation_finished_time = pg.time.get_ticks()
                             overflowed = self.score_animation_time_chunk - ((self.anim_current_elapsed_time + self.score_animation_time_chunk) - self.elapsed_time)
                             self.anim_current_elapsed_time += overflowed
                             self.anim_current_total_score += overflowed
@@ -386,14 +391,16 @@ class ResultScene(Scene):
                     if from_last_time >= self.score_animation_barely_missed_delay:
                         if self.anim_current_score + self.score_animation_barely_missed_chunk > self.score:
                             self.score_barely_missed_animation_finished = True
+                            self.score_barely_missed_animation_finished_time = pg.time.get_ticks()
                             overflowed = self.score_animation_barely_missed_chunk - ((self.anim_current_score + self.score_animation_barely_missed_chunk) - self.score)
                             self.anim_current_score += overflowed
                             self.anim_current_total_score += overflowed
                             self.last_update_time = pg.time.get_ticks()
                         else:
-                            self.anim_current_score += self.score_animation_barely_missed_chunk
-                            self.anim_current_total_score += self.score_animation_barely_missed_chunk
-                            self.last_update_time = pg.time.get_ticks()
+                            if pg.time.get_ticks() - self.score_time_animation_finished_time >= self.score_time_animation_finish_delay:
+                                self.anim_current_score += self.score_animation_barely_missed_chunk
+                                self.anim_current_total_score += self.score_animation_barely_missed_chunk
+                                self.last_update_time = pg.time.get_ticks()
                 else:
                     self.animation_finished = True
                     self.create_group("buttons", self.RestartBtn, self.MenuBtn, self.QuitBtn)
