@@ -4,6 +4,7 @@ from pathlib import Path
 from os import path
 import pygame as pg
 
+from lib.object import Star
 from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect
 from lib.object import Player, Enemy
 
@@ -46,6 +47,8 @@ class Scene:
     def inherit_groups(self, *group_names):
         return {name: self.groups[name] for name in group_names}
 
+star_effect_delay = 250
+
 class MenuScene(Scene):
     def __init__(self, gameObject, data):
         super().__init__()
@@ -77,7 +80,10 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("시작하기", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuGameTransition, {"inheritGroups": self.inherit_groups("title", "buttons")}))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuGameTransition, {
+                "inheritGroups": self.inherit_groups("title", "buttons", "stars"), 
+                "lastStarCreation": self.last_star_creation
+                }))
         ),
         help_button = Button(
             (200, 50),
@@ -87,7 +93,7 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("도움말", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(HowToPlayScene))  # TODO: background_color change to black
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(HowToPlayScene))
         )
         quit_button = Button(
             (200, 50),
@@ -100,6 +106,23 @@ class MenuScene(Scene):
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
         self.create_group("buttons", start_button, help_button, quit_button)
+        
+        # for star effect
+        if "inheritGroups" in data and "stars" in data["inheritGroups"]:
+            self.groups["stars"] = data["inheritGroups"]["stars"]
+        else:
+            self.create_group("stars")
+        if "lastStarCreation" in data:
+            self.last_star_creation = data["lastStarCreation"]
+        else:
+            self.last_star_creation = pg.time.get_ticks()
+    
+    def update(self, events):
+        super().update(events)
+        # star effect
+        if pg.time.get_ticks() - self.last_star_creation > star_effect_delay:
+            self.add_item("stars", Star(randint(0, pg.display.get_window_size()[0]), randint(0, pg.display.get_window_size()[1])))
+            self.last_star_creation = pg.time.get_ticks()
 
 class MenuGameTransition(Scene):
     def __init__(self, gameObject, data):
@@ -116,8 +139,16 @@ class MenuGameTransition(Scene):
         self.gameObject = gameObject
         self.transitionFinishedTime = None
         self.transitionFinishDelay = 500
+
+        # for star effect
+        self.last_star_creation = data["lastStarCreation"]
     
     def update(self, events):
+        # star effect
+        if pg.time.get_ticks() - self.last_star_creation > star_effect_delay:
+            self.add_item("stars", Star(randint(0, pg.display.get_window_size()[0]), randint(0, pg.display.get_window_size()[1])))
+            self.last_star_creation = pg.time.get_ticks()
+        # main update
         for name, group in self.groups.copy().items():
             if not group:
                 del self.groups[name]
@@ -125,7 +156,7 @@ class MenuGameTransition(Scene):
             if self.transitionFinishedTime == None:
                 self.transitionFinishedTime = pg.time.get_ticks()
             elif pg.time.get_ticks() - self.transitionFinishedTime > self.transitionFinishDelay:
-                self.gameObject.change_scene(GameScene)
+                self.gameObject.change_scene(GameScene, {"inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation})
         elapsed_time = pg.time.get_ticks() - self.scene_start_time
         if "title" in self.groups.keys():
             for item in self.groups["title"]:
@@ -164,8 +195,17 @@ class GameScene(Scene):
         self.target_y_range = 50  # * 2
         
         self.create_group("enemy")
+        
+        # for star effect
+        self.groups["stars"] = data["inheritGroups"]["stars"]
+        self.last_star_creation = data["lastStarCreation"]
     
     def update(self, events):
+        # star effect
+        if pg.time.get_ticks() - self.last_star_creation > star_effect_delay:
+            self.add_item("stars", Star(randint(0, pg.display.get_window_size()[0]), randint(0, pg.display.get_window_size()[1])))
+            self.last_star_creation = pg.time.get_ticks()
+        # main update
         elapsed_time = pg.time.get_ticks() - self.started_time
         
         def hit_test(item, offset):
@@ -185,7 +225,7 @@ class GameScene(Scene):
             self.player.set_test_hitbox("normal_hitbox")
             if normal_hit(item):
                 self.player.kill()
-                self.game.change_scene(ResultScene, {"inheritGroups": self.inherit_groups("enemy"), "elapsedTime": elapsed_time, "score": self.score, "totalScore": elapsed_time + self.score})
+                self.game.change_scene(ResultScene, {"inheritGroups": self.inherit_groups("enemy", "stars"), "elapsedTime": elapsed_time, "score": self.score, "totalScore": elapsed_time + self.score, "lastStarCreation": self.last_star_creation})
             elif point_hit(item) and not item.counted:
                 item.counted = True
                 self.score += 2000
@@ -280,7 +320,7 @@ class ResultScene(Scene):
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 8 * 5 - 40),
             BUTTON_COLOR,
             Text("다시하기", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene, {"inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation})),
         )
         
         self.MenuBtn = Button(
@@ -288,7 +328,7 @@ class ResultScene(Scene):
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 8 * 5 + 40),
             BUTTON_COLOR,
             Text("메뉴로", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene, {"inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation}))
         )
         
         self.QuitBtn = Button(
@@ -310,8 +350,16 @@ class ResultScene(Scene):
         self.transitionMoveSpeed = self.elementMoveLength / self.transitionEndTime
         for key in self.raws:
             self.raws[key][1][1] += self.elementMoveLength
+        
+        # for star effect
+        self.last_star_creation = data["lastStarCreation"]
     
     def update(self, events):
+        # star effect
+        if pg.time.get_ticks() - self.last_star_creation > star_effect_delay:
+            self.add_item("stars", Star(randint(0, pg.display.get_window_size()[0]), randint(0, pg.display.get_window_size()[1])))
+            self.last_star_creation = pg.time.get_ticks()
+        # main update
         super().update(events)
         if self.transitioning:
             for key in self.raws:

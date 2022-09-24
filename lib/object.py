@@ -313,3 +313,30 @@ class Enemy(pg.sprite.Sprite):
     
     def render(self, surface:pg.Surface):
         surface.blit(self.image, self.rect)
+
+class Star(pg.sprite.Sprite):
+    def __init__(self, x, y, color:Color=Colors.WHITE):
+        super().__init__()
+        self.image = pg.Surface((2, 2))
+        self.image.set_alpha(0)
+        self.image.fill(color.as_iter())
+        self.rect = self.image.get_rect(center=(x, y))
+        
+        self.born_time = pg.time.get_ticks()
+        self.live_time = randint(1000, 5000)
+    
+    def update(self, events):
+        living_time = pg.time.get_ticks() - self.born_time
+        
+        if pg.time.get_ticks() - self.born_time > self.live_time:
+            self.kill()
+        else:
+            # alpha animation
+            # 0 to 255
+            if living_time < self.live_time / 2:
+                self.image.set_alpha(255 * (living_time / (self.live_time / 2)))
+            else:
+                self.image.set_alpha(255 * (1 - (living_time - self.live_time / 2) / (self.live_time / 2)))
+    
+    def render(self, surface):
+        surface.blit(self.image, self.rect)
