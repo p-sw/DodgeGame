@@ -155,12 +155,16 @@ class Button(pg.sprite.Sprite):
         
         self.hovered = False
         self.clicked = False
+        
+        self.disabled = False
     
     def render(self, surface:pg.Surface):
         self.text.render(self.image)
         surface.blit(self.image, self.rect)
     
     def color_update(self):
+        if self.disabled:
+            self.image.fill((self.colors[0] - Color(50, 50, 50)).as_iter())
         if self.hovered:
             if self.clicked:
                 self.image.fill(self.colors[2].as_iter())
@@ -172,17 +176,18 @@ class Button(pg.sprite.Sprite):
     def update(self, events):
         mouse_position = pg.mouse.get_pos()
         
-        if self.rect.collidepoint(mouse_position):
-            self.hovered = True
-            if pg.MOUSEBUTTONDOWN in events:
-                self.clicked = True
-            if pg.MOUSEBUTTONUP in events:
-                if self.clicked:
-                    self.click_event()
+        if not self.disabled:
+            if self.rect.collidepoint(mouse_position):
+                self.hovered = True
+                if pg.MOUSEBUTTONDOWN in events:
+                    self.clicked = True
+                if pg.MOUSEBUTTONUP in events:
+                    if self.clicked:
+                        self.click_event()
+                    self.clicked = False
+            else:
                 self.clicked = False
-        else:
-            self.clicked = False
-            self.hovered = False
+                self.hovered = False
         
         self.color_update()
 

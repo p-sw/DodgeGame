@@ -22,7 +22,7 @@ class Scene:
         self.groups[name].add(sprites)
     
     def add_raw_item(self, item, center, name):
-        self.raws[name] = [item, center]
+        self.raws[name] = [item, list(center)]
     
     def create_group(self, name, *sprites:Iterable[pg.sprite.Sprite]):
         self.groups[name] = pg.sprite.Group(sprites)
@@ -77,7 +77,7 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("시작하기", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuGameTransition, {"inheritGroups": self.inherit_groups("title", "buttons")}))
         ),
         help_button = Button(
             (200, 50),
@@ -87,7 +87,7 @@ class MenuScene(Scene):
             ),
             BUTTON_COLOR,
             Text("도움말", button_font, Colors.WHITE),
-            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(HowToPlayScene))
+            ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(HowToPlayScene))  # TODO: background_color change to black
         )
         quit_button = Button(
             (200, 50),
@@ -103,8 +103,43 @@ class MenuScene(Scene):
 
 class MenuGameTransition(Scene):
     def __init__(self, gameObject, data):
+        self.screen_color = Colors.BLACK.as_iter()
         super().__init__()
-        self.groups = data["inheritGroups"]
+        self.groups: dict = data["inheritGroups"]
+        self.scene_start_time = pg.time.get_ticks()
+        
+        self.power_factor_a = 1.0042
+        self.start_time = 100
+        
+        self.push_power = lambda currentTime: self.power_factor_a ** (currentTime + self.start_time)
+        
+        self.gameObject = gameObject
+        self.transitionFinishedTime = None
+        self.transitionFinishDelay = 500
+    
+    def update(self, events):
+        for name, group in self.groups.copy().items():
+            if not group:
+                del self.groups[name]
+        if not self.groups:
+            if self.transitionFinishedTime == None:
+                self.transitionFinishedTime = pg.time.get_ticks()
+            elif pg.time.get_ticks() - self.transitionFinishedTime > self.transitionFinishDelay:
+                self.gameObject.change_scene(GameScene)
+        elapsed_time = pg.time.get_ticks() - self.scene_start_time
+        if "title" in self.groups.keys():
+            for item in self.groups["title"]:
+                item.rect.y -= self.push_power(elapsed_time)
+                if item.rect.bottom < 0:
+                    self.groups["title"].remove(item)
+        if "buttons" in self.groups.keys():
+            for item in self.groups["buttons"]:
+                item.disabled = True
+                item.rect.y += self.push_power(elapsed_time)
+                if item.rect.top > self.gameObject.screen.get_height():
+                    self.groups["buttons"].remove(item)
+        
+        super().update(events)
 
 class GameScene(Scene):
     def __init__(self, gameObject, data):
@@ -214,7 +249,7 @@ class ResultScene(Scene):
         ]
         
         self.score_displayer_font = pg.font.Font(font_located('INVASION2000'), 40)
-        self.score_displayer = self.score_displayer_font.render(str(self.score), True, Colors.ORANGE.as_iter())
+        self.score_displayer = self.score_displayer_font.render("0", True, Colors.ORANGE.as_iter())
         
         self.score_comment_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
         self.score_comment_overall = self.score_comment_font.render("총 점수", True, (Colors.RED - Color(50, 0, 0)).as_iter())
@@ -231,10 +266,10 @@ class ResultScene(Scene):
         self.add_raw_item(self.score_splitted_time, (gameObject.screen.get_width() / 4, gameObject.screen.get_height() / 5 + 200), "score_splitted_time")
         self.add_raw_item(self.score_splitted_barely_missed, (gameObject.screen.get_width() / 4 * 3, gameObject.screen.get_height() / 5 + 200), "score_splitted_barely_missed")
         
-        self.score_animation_time_delay = 50
-        self.score_animation_barely_missed_delay = 50
-        self.score_animation_time_chunk = 1000
-        self.score_animation_barely_missed_chunk = 1000
+        self.score_animation_time_delay = 20
+        self.score_animation_barely_missed_delay = 20
+        self.score_animation_time_chunk = 100
+        self.score_animation_barely_missed_chunk = 100
         
         self.animation_finished = False
         self.score_time_animation_finished = False
@@ -264,46 +299,62 @@ class ResultScene(Scene):
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
         
-        # self.create_group("buttons", RestartBtn, MenuBtn, QuitBtn)
+        # element repositioning code
+        # because of transition
+        self.transitioning = True
+        self.transitionEndTime = 1500
+        
+        standard_element = self.raws["score_splitted_time"]
+        self.elementMoveLength = self.screen.get_height() - (standard_element[1][1] - standard_element[0].get_rect().height / 2)
+        self.elementFinishPosition = standard_element[1][1]
+        self.transitionMoveSpeed = self.elementMoveLength / self.transitionEndTime
+        for key in self.raws:
+            self.raws[key][1][1] += self.elementMoveLength
     
     def update(self, events):
         super().update(events)
-        from_last_time = pg.time.get_ticks() - self.last_update_time
-        
-        if not self.animation_finished:
-            if not self.score_time_animation_finished:
-                if from_last_time >= self.score_animation_time_delay:
-                    if self.anim_current_elapsed_time + self.score_animation_time_chunk > self.elapsed_time:
-                        self.score_time_animation_finished = True
-                        overflowed = self.score_animation_time_chunk - ((self.anim_current_elapsed_time + self.score_animation_time_chunk) - self.elapsed_time)
-                        self.anim_current_elapsed_time += overflowed
-                        self.anim_current_total_score += overflowed
-                        self.last_update_time = pg.time.get_ticks()
-                    else:
-                        self.anim_current_elapsed_time += self.score_animation_time_chunk
-                        self.anim_current_total_score += self.score_animation_time_chunk
-                        self.last_update_time = pg.time.get_ticks()
-            elif not self.score_barely_missed_animation_finished:
-                if from_last_time >= self.score_animation_barely_missed_delay:
-                    if self.anim_current_score + self.score_animation_barely_missed_chunk > self.score:
-                        self.score_barely_missed_animation_finished = True
-                        overflowed = self.score_animation_barely_missed_chunk - ((self.anim_current_score + self.score_animation_barely_missed_chunk) - self.score)
-                        self.anim_current_score += overflowed
-                        self.anim_current_total_score += overflowed
-                        self.last_update_time = pg.time.get_ticks()
-                    else:
-                        self.anim_current_score += self.score_animation_barely_missed_chunk
-                        self.anim_current_total_score += self.score_animation_barely_missed_chunk
-                        self.last_update_time = pg.time.get_ticks()
-            else:
-                self.animation_finished = True
-                self.create_group("buttons", self.RestartBtn, self.MenuBtn, self.QuitBtn)
-                
-        self.raws["score_displayer"][0] = self.score_displayer_font.render(f"{self.anim_current_total_score}", True, Colors.ORANGE.as_iter())
-        
-        self.raws["score_splitted_time"][0] = self.score_displayer_font.render(f"{self.anim_current_elapsed_time}", True, Colors.ORANGE.as_iter())
-        
-        self.raws["score_splitted_barely_missed"][0] = self.score_displayer_font.render(f"{self.anim_current_score}", True, Colors.ORANGE.as_iter())
+        if self.transitioning:
+            for key in self.raws:
+                self.raws[key][1][1] -= self.transitionMoveSpeed
+            if self.raws["score_splitted_time"][1][1] <= self.elementFinishPosition:
+                self.transitioning = False
+        else:
+            from_last_time = pg.time.get_ticks() - self.last_update_time
+            
+            if not self.animation_finished:
+                if not self.score_time_animation_finished:
+                    if from_last_time >= self.score_animation_time_delay:
+                        if self.anim_current_elapsed_time + self.score_animation_time_chunk > self.elapsed_time:
+                            self.score_time_animation_finished = True
+                            overflowed = self.score_animation_time_chunk - ((self.anim_current_elapsed_time + self.score_animation_time_chunk) - self.elapsed_time)
+                            self.anim_current_elapsed_time += overflowed
+                            self.anim_current_total_score += overflowed
+                            self.last_update_time = pg.time.get_ticks()
+                        else:
+                            self.anim_current_elapsed_time += self.score_animation_time_chunk
+                            self.anim_current_total_score += self.score_animation_time_chunk
+                            self.last_update_time = pg.time.get_ticks()
+                elif not self.score_barely_missed_animation_finished:
+                    if from_last_time >= self.score_animation_barely_missed_delay:
+                        if self.anim_current_score + self.score_animation_barely_missed_chunk > self.score:
+                            self.score_barely_missed_animation_finished = True
+                            overflowed = self.score_animation_barely_missed_chunk - ((self.anim_current_score + self.score_animation_barely_missed_chunk) - self.score)
+                            self.anim_current_score += overflowed
+                            self.anim_current_total_score += overflowed
+                            self.last_update_time = pg.time.get_ticks()
+                        else:
+                            self.anim_current_score += self.score_animation_barely_missed_chunk
+                            self.anim_current_total_score += self.score_animation_barely_missed_chunk
+                            self.last_update_time = pg.time.get_ticks()
+                else:
+                    self.animation_finished = True
+                    self.create_group("buttons", self.RestartBtn, self.MenuBtn, self.QuitBtn)
+                    
+            self.raws["score_displayer"][0] = self.score_displayer_font.render(f"{self.anim_current_total_score}", True, Colors.ORANGE.as_iter())
+            
+            self.raws["score_splitted_time"][0] = self.score_displayer_font.render(f"{self.anim_current_elapsed_time}", True, Colors.ORANGE.as_iter())
+            
+            self.raws["score_splitted_barely_missed"][0] = self.score_displayer_font.render(f"{self.anim_current_score}", True, Colors.ORANGE.as_iter())
 
 
 class HowToPlayScene(Scene):
