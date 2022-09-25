@@ -4,7 +4,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-deta = Deta(project_key="c0ck7b4e_HQ7hAy9hspk5gJPKQvkS9csYyBu1oLeo")
+from os import environ
+
+deta = Deta(project_key=environ.get("DATABASE_KEY"))
 
 app = FastAPI(title="부평고 2022 코딩 동아리", description="2022년도 부평고등학교 코딩 동아리에서 만든 게임에 쓰이는 백엔드 API입니다.", docs_url=None, redoc_url="/docs")
 
