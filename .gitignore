@@ -3,3 +3,4 @@ game.spec
 build
 dist
 .env
+auth.txt
