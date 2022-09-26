@@ -5,7 +5,7 @@ from os import path
 import pygame as pg
 
 from lib.object import Star
-from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect
+from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect, NumberInputBox
 from lib.object import Player, Enemy
 
 BASEDIR = Path(__file__).parent.parent.absolute()
@@ -48,6 +48,79 @@ class Scene:
         return {name: self.groups[name] for name in group_names}
 
 star_effect_delay = 250
+
+class StudentIDInputScene(Scene):
+    def __init__(self, gameObject, data):
+        super().__init__()
+        self.screen_color = Colors.WHITE.as_iter()
+        
+        title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
+        title = Text("학번을 입력해주세요.",
+                     title_font,
+                     Colors.ORANGE,
+                     (
+                         gameObject.screen.get_width() / 2,
+                         gameObject.screen.get_height() / 6
+                     ),
+                     TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2)))
+    
+        self.create_group('title', title)
+        
+        input_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
+        inputbox = NumberInputBox(
+            gameObject.screen.get_width() / 2,
+            gameObject.screen.get_height() / 2,
+            gameObject.screen.get_width() / 3,
+            gameObject.screen.get_height() / 10,
+            [
+                Colors.WHITE,
+                Colors.ORANGE + Color(20, 20, 20),
+                Colors.BLACK,
+                Colors.WHITE - Color(20, 20, 20),
+                Colors.ORANGE + Color(40, 40, 40),
+                Colors.BLACK,
+                Colors.WHITE - Color(40, 40, 40),
+                Colors.ORANGE + Color(60, 60, 60),
+                Colors.BLACK,
+                Colors.WHITE,
+                Colors.ORANGE + Color(20, 20, 20),
+                Colors.BLACK
+            ],
+            input_font
+        )
+        self.create_group('inputbox', inputbox)
+        
+        def game_start(gameObject):
+            ...
+        
+        button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
+        game_start_button = Button(
+            (gameObject.screen.get_width() / 4, gameObject.screen.get_height() / 12),
+            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 10*8),
+            [
+                Colors.ORANGE,
+                Colors.RED,
+                Colors.RED - Color(100, 0, 0)
+            ],
+            Text("게임 실행", button_font, Colors.WHITE),
+            ButtonEvent(gameObject, game_start),
+        )
+        self.create_group('button', game_start_button)
+    
+    def update(self, events):
+        super().update(events)
+        inputted_id = self.groups['inputbox'].sprites()[0].get_text()
+        
+        if len(inputted_id) != 5:
+            self.groups['button'].sprites()[0].disabled = True
+        elif inputted_id[0] == '0' or inputted_id[-1] == '0':
+            self.groups['button'].sprites()[0].disabled = True
+        
+        # TODO: Get valid student id and set it to gameObject.student_id
+        # TODO: Use it in result scene to save score
+        
+        if pg.K_RETURN in events:
+            print('Enter pressed')
 
 class MenuScene(Scene):
     def __init__(self, gameObject, data):

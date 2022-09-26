@@ -340,3 +340,103 @@ class Star(pg.sprite.Sprite):
     
     def render(self, surface):
         surface.blit(self.image, self.rect)
+
+class NumberInputBox(pg.sprite.Sprite):
+    def __init__(self, x, y, width, height, colors: Iterable[Color], font):
+        super().__init__()
+        self.image = pg.Surface((width+2, height+2))
+        self.rect = self.image.get_rect(center=(x, y))
+        
+        self.colors = {
+            "normal": {
+                "background": colors[0],
+                "background_border": colors[1],
+                "text": colors[2],
+            },
+            "hover": {
+                "background": colors[3],
+                "background_border": colors[4],
+                "text": colors[5],
+            },
+            "pressed": {
+                "background": colors[6],
+                "background_border": colors[7],
+                "text": colors[8],
+            },
+            "active": {
+                "background": colors[9],
+                "background_border": colors[10],
+                "text": colors[11],
+            }
+        }
+        self.image.fill(self.colors["normal"]["background"].as_iter())
+        
+        self.text = ""
+        self.font = font
+        self.limit = 5
+        
+        self.hovered = False
+        self.pressed = False
+        self.activated = False
+    
+    def update(self, events):
+        if self.rect.collidepoint(pg.mouse.get_pos()):
+            self.hovered = True
+            if not self.pressed and pg.mouse.get_pressed()[0]:
+                self.pressed = True
+            elif self.pressed and not pg.mouse.get_pressed()[0]:
+                self.pressed = False
+                self.activated = True
+        elif self.activated and pg.mouse.get_pressed()[0]:
+            self.activated = False
+            self.pressed = False
+            self.hovered = False
+        else:
+            self.hovered = False
+            self.pressed = False
+        
+        
+        if self.activated:  # key input event
+            if pg.KEYDOWN in events:
+                if len(self.text) < self.limit:
+                    if pg.key.get_pressed()[pg.K_1]:
+                        self.text += "1"
+                    if pg.key.get_pressed()[pg.K_2]:
+                        self.text += "2"
+                    if pg.key.get_pressed()[pg.K_3]:
+                        self.text += "3"
+                    if pg.key.get_pressed()[pg.K_4]:
+                        self.text += "4"
+                    if pg.key.get_pressed()[pg.K_5]:
+                        self.text += "5"
+                    if pg.key.get_pressed()[pg.K_6]:
+                        self.text += "6"
+                    if pg.key.get_pressed()[pg.K_7]:
+                        self.text += "7"
+                    if pg.key.get_pressed()[pg.K_8]:
+                        self.text += "8"
+                    if pg.key.get_pressed()[pg.K_9]:
+                        self.text += "9"
+                    if pg.key.get_pressed()[pg.K_0]:
+                        self.text += "0"
+                if pg.key.get_pressed()[pg.key.key_code("backspace")]:
+                    self.text = self.text[:-1]
+    
+    def render(self, surface):
+        if self.activated:
+            self.image.fill(self.colors["active"]["background"].as_iter())
+        elif self.pressed:
+            self.image.fill(self.colors["pressed"]["background"].as_iter())
+        elif self.hovered:
+            self.image.fill(self.colors["hover"]["background"].as_iter())
+        else:
+            self.image.fill(self.colors["normal"]["background"].as_iter())
+        
+        pg.draw.rect(self.image, self.colors["normal"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 5)
+        
+        text = self.font.render(self.text, True, self.colors["normal"]["text"].as_iter())
+        self.image.blit(text, (self.rect.width / 2 - text.get_width() / 2, self.rect.height / 2 - text.get_height() / 2))
+        surface.blit(self.image, self.rect)
+    
+    def get_text(self):
+        return self.text

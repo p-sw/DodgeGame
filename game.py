@@ -1,6 +1,6 @@
 import pygame as pg
 
-from lib.scene import MenuScene
+from lib.scene import StudentIDInputScene
 
 class EventWrapper:
     def __init__(self, events):
@@ -21,7 +21,7 @@ class Game:
         self.clock = pg.time.Clock()
         self.finished = False
         
-        self.change_scene(MenuScene)
+        self.change_scene(StudentIDInputScene)
     
     def start(self):
         while not self.finished:
