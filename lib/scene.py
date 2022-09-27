@@ -53,6 +53,7 @@ class StudentIDInputScene(Scene):
     def __init__(self, gameObject, data):
         super().__init__()
         self.screen_color = Colors.WHITE.as_iter()
+        self.gameObject = gameObject
         
         title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
         title = Text("학번을 입력해주세요.",
@@ -91,7 +92,11 @@ class StudentIDInputScene(Scene):
         self.create_group('inputbox', inputbox)
         
         def game_start(gameObject):
-            ...
+            inputted_id = self.groups['inputbox'].sprites()[0].get_text()
+            gameObject.student_grade = int(inputted_id[0])
+            gameObject.student_class = int(inputted_id[1:3])
+            gameObject.student_number = int(inputted_id[3:])
+            gameObject.change_scene(MenuScene)
         
         button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
         game_start_button = Button(
@@ -113,14 +118,15 @@ class StudentIDInputScene(Scene):
         
         if len(inputted_id) != 5:
             self.groups['button'].sprites()[0].disabled = True
-        elif inputted_id[0] == '0' or inputted_id[-1] == '0':
-            self.groups['button'].sprites()[0].disabled = True
-        
-        # TODO: Get valid student id and set it to gameObject.student_id
-        # TODO: Use it in result scene to save score
-        
-        if pg.K_RETURN in events:
-            print('Enter pressed')
+        else:
+            student_grade = int(inputted_id[0])
+            student_class = int(inputted_id[1:3])
+            student_number = int(inputted_id[3:])
+            
+            if 1 <= student_grade <= 3 and 1 <= student_class <= 10 and 1 <= student_number <= 30:
+                self.groups['button'].sprites()[0].disabled = False
+            else:
+                self.groups['button'].sprites()[0].disabled = True
 
 class MenuScene(Scene):
     def __init__(self, gameObject, data):

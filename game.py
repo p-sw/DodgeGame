@@ -21,6 +21,10 @@ class Game:
         self.clock = pg.time.Clock()
         self.finished = False
         
+        self.student_grade = None
+        self.student_class = None
+        self.student_number = None
+        
         self.change_scene(StudentIDInputScene)
     
     def start(self):
