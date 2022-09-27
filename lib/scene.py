@@ -1,8 +1,11 @@
 from typing import Iterable
 from random import randint
+from random import choice
 from pathlib import Path
 from os import path
 import pygame as pg
+from threading import Thread
+import requests
 
 from lib.object import Star
 from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect, NumberInputBox
@@ -96,7 +99,7 @@ class StudentIDInputScene(Scene):
             gameObject.student_grade = int(inputted_id[0])
             gameObject.student_class = int(inputted_id[1:3])
             gameObject.student_number = int(inputted_id[3:])
-            gameObject.change_scene(MenuScene)
+            gameObject.change_scene(IDMenuTransition)
         
         button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
         game_start_button = Button(
@@ -127,6 +130,82 @@ class StudentIDInputScene(Scene):
                 self.groups['button'].sprites()[0].disabled = False
             else:
                 self.groups['button'].sprites()[0].disabled = True
+
+class IDMenuTransition(Scene):
+    def __init__(self, gameObject, data):
+        super().__init__()
+        self.screen_color = Colors.WHITE.as_iter()
+        self.gameObject = gameObject
+        
+        tip_messages = [
+            "이 게임에 들어간 이미지는 단 하나도 없답니다. 모두 수학이 대신하고 있죠.",
+            "이 게임은 부평고등학교 2022년 코딩동아리에서 만들었습니다.",
+            "이 게임은 총 1,144줄의 코드로 구성되어 있습니다."
+        ]
+        
+        tip_font = pg.font.Font(font_located('ONE Mobile Light'), 10)
+        tip_text = Text(
+            "" + choice(tip_messages),
+            tip_font,
+            Colors.BLACK + Color(100, 100, 100),
+            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 10)
+        )
+        self.create_group('tip', tip_text)
+        
+        loading_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
+        loading_text = Text(
+            "로딩 중...",
+            loading_font,
+            Colors.BLACK + Color(100, 100, 100),
+            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 2),
+            TextShadowEffect(Colors.BLACK + Color(120, 120, 120), (2, 2))
+        )
+        self.create_group('loading', loading_text)
+        
+        loading_status = Text(
+            "",
+            tip_font,
+            Colors.BLACK + Color(100, 100, 100),
+            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 2 + 50),
+        )
+        self.create_group('loading_status', loading_status)
+        
+        self.check_delay = 3000
+        
+        self.server_ok = None
+        
+        self.server_check_time = None
+
+        self.server_thread = None
+    
+    def update(self, events):
+        super().update(events)
+        if self.server_ok is None and not self.server_thread:
+            def server_thread(self):
+                try:
+                    req = requests.get("https://game.api.sserve.work/check", timeout=10)
+                    if req.status_code == 200:
+                        self.server_ok = True
+                    else:
+                        self.server_ok = False
+                except:
+                    self.server_ok = False
+            self.server_thread = Thread(target=server_thread, args=(self,))
+            self.server_thread.run()
+        elif self.server_thread.is_alive() or self.server_ok is None:
+            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 확인 중...")
+        elif not self.server_ok:
+            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 실패")
+        elif self.server_ok:
+            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공")
+        
+        if self.server_ok is not None:
+            if not self.server_check_time:
+                self.server_check_time = pg.time.get_ticks()
+            else:
+                if pg.time.get_ticks() - self.server_check_time > self.check_delay:
+                    self.gameObject.change_scene(MenuScene(self.gameObject, None))
+
 
 class MenuScene(Scene):
     def __init__(self, gameObject, data):

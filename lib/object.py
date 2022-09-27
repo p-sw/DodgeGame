@@ -128,11 +128,8 @@ class Text(pg.sprite.Sprite):
         if self.frame_event:
             self.frame_event(events)
             
-    def set_text(self, text):
-        self.text = self.font.render(text, True, self.color.as_iter())
-        self.text_shadow = None if not self.text_shadow_obj else self.font.render(text, True, (self.color - self.text_shadow_obj.color).as_iter())
-        self.rect.width = self.font.size(text)[0] if not self.text_shadow_obj else self.text_shadow_obj.size_with_offset(self.font.size(text))[0]
-        self.rect.height = self.font.size(text)[1] if not self.text_shadow_obj else self.text_shadow_obj.size_with_offset(self.font.size(text))[1]
+    def get_another_text(self, text):
+        return Text(text, self.font, self.color, self.center, self.text_shadow_obj, self.frame_event)
             
 class ButtonEvent:
     def __init__(self, gameObject, callback):
