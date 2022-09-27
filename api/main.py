@@ -104,3 +104,7 @@ async def put_score(auth: dict = Depends(auth),
     else:
         db.put(player_id, obj)
     return obj
+
+@app.get("/check", status_code=200)
+async def checkalive():
+    return {"alive": True}
