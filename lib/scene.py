@@ -163,7 +163,7 @@ class IDMenuTransition(Scene):
         self.create_group('loading', loading_text)
         
         loading_status = Text(
-            "",
+            "서버 연결 확인 중..",
             tip_font,
             Colors.BLACK + Color(100, 100, 100),
             (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 2 + 50),
@@ -192,20 +192,17 @@ class IDMenuTransition(Scene):
                     self.server_ok = False
             self.server_thread = Thread(target=server_thread, args=(self,))
             self.server_thread.run()
-        elif self.server_thread.is_alive() or self.server_ok is None:
-            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 확인 중...")
         elif not self.server_ok:
-            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 실패")
+            self.add_item('loading_status', self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 실패"))
         elif self.server_ok:
-            self.groups['loading_status'].sprites()[0] = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공")
+            self.add_item('loading_status', self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공"))
         
         if self.server_ok is not None:
             if not self.server_check_time:
                 self.server_check_time = pg.time.get_ticks()
             else:
                 if pg.time.get_ticks() - self.server_check_time > self.check_delay:
-                    self.gameObject.change_scene(MenuScene(self.gameObject, None))
-
+                    self.gameObject.change_scene(MenuScene)
 
 class MenuScene(Scene):
     def __init__(self, gameObject, data):

@@ -128,7 +128,9 @@ class Text(pg.sprite.Sprite):
         if self.frame_event:
             self.frame_event(events)
             
-    def get_another_text(self, text):
+    def get_another_text(self, text, kill=True):
+        if kill:
+            self.kill()
         return Text(text, self.font, self.color, self.center, self.text_shadow_obj, self.frame_event)
             
 class ButtonEvent:
