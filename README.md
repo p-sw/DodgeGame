@@ -1,3 +1,9 @@
+# 어떻게 작동하는가
+## 게임 - 웹API
+![GameAPILogic](https://github.com/sserve-kr/DodgeGame/blob/064b8dab83a46a4297cdbc4cdb9aee75d57a068d/logicdraws/logic-GameAPILogic.drawio.png)
+
+---
+
 # TODO
 + API
   - 학번에 따라 임시 API 키 값 가져오게 하기
