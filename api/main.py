@@ -13,7 +13,7 @@ auth_key = token_hex(20)
 with open("auth.txt", "w", encoding="utf-8") as f:
     f.write(f"----------AUTH KEY----------\n{auth_key}\n----------AUTH KEY END----------")
 
-app = FastAPI(title="부평고 2022 코딩 동아리", description="2022년도 부평고등학교 코딩 동아리에서 만든 게임에 쓰이는 백엔드 API입니다.", docs_url=None, redoc_url="/docs")
+app = FastAPI(title="부평고 2022 코딩 동아리", description="2022년도 부평고등학교 코딩 동아리에서 만든 게임에 쓰이는 백엔드 API입니다.", docs_url="/docs", redoc_url="/redoc")
 
 database = databases.Database("sqlite:///./db.sqlite3")
 
