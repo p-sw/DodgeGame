@@ -22,17 +22,17 @@ metadata = sqlalchemy.MetaData()
 scores = sqlalchemy.Table(
     "scores",
     metadata,
-    sqlalchemy.column("student_id", sqlalchemy.String, primary_key=True),
-    sqlalchemy.column("time_score", sqlalchemy.Integer),
-    sqlalchemy.column("action_score", sqlalchemy.Integer),
-    sqlalchemy.column("overall_score", sqlalchemy.Integer)
+    sqlalchemy.Column("student_id", sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("time_score", sqlalchemy.Integer),
+    sqlalchemy.Column("action_score", sqlalchemy.Integer),
+    sqlalchemy.Column("overall_score", sqlalchemy.Integer)
 )
 
 playcount_records = sqlalchemy.Table(
     "playcount",
     metadata,
-    sqlalchemy.column("student_id", sqlalchemy.String, primary_key=True),
-    sqlalchemy.column("playcount", sqlalchemy.Integer)
+    sqlalchemy.Column("student_id", sqlalchemy.String, primary_key=True),
+    sqlalchemy.Column("playcount", sqlalchemy.Integer)
 )
 
 engine = sqlalchemy.create_engine(
@@ -114,6 +114,6 @@ async def put_playcount(auth: dict = Depends(auth),
         await database.execute(playcount_records.insert().values(student_id=player_id, playcount=1))
     return {"student_id": player_id}
 
-@app.get("/check", status_code=200)
+@app.get("/check", status_code=200, tags=["Etc"])
 async def checkalive():
     return {"alive": True}
