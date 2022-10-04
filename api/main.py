@@ -54,6 +54,12 @@ async def auth(key: str = Query(..., title="보안 키")):
     else:
         return {"error": True, "obj": HTTPException(status_code=403, detail="보안 키가 올바르지 않습니다.")}
 
+async def row_to_dict(cols, row):
+    try:
+        return {col: row[i] for i, col in enumerate(cols)}
+    except TypeError:
+        return None
+
 @app.get('/get-score', 
          summary="점수 가져오기", 
          response_model=ScoreListResponseModel,
@@ -62,8 +68,13 @@ async def auth(key: str = Query(..., title="보안 키")):
          tags=["Score", "Load"])
 async def get_score(player_id: str = Query(None, title="학번", description="스코어를 가져올 학생의 학번")):
     if player_id:
-        return await database.fetch_one(scores.select().where(scores.c.student_id == player_id))
-    return await database.fetch_all(scores.select())
+        fin = [await row_to_dict([column.key for column in scores.columns], await database.fetch_one(scores.select().where(scores.c.student_id == player_id)))]
+    else:
+        res = await database.fetch_all(scores.select())
+        fin = []
+        for row in res:
+            fin.append(await row_to_dict([column.key for column in scores.columns], row))
+    return {"scores": fin}
 
 @app.put("/put-score",
          summary="점수 저장",

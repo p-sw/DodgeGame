@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class SingleScoreResponseModel(BaseModel):
     student_id: str = Field(None, description="학번")
@@ -18,7 +18,7 @@ class SingleScoreResponseModel(BaseModel):
         }
 
 class ScoreListResponseModel(BaseModel):
-    scores: List[SingleScoreResponseModel] = Field(None, description="점수 목록")
+    scores: List[Optional[SingleScoreResponseModel]] = Field(None, description="점수 목록")
     
     class Config:
         schema_extra = {
