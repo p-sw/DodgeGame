@@ -56,7 +56,7 @@ async def auth(key: str = Query(..., title="보안 키")):
 
 @app.get('/get-score', 
          summary="점수 가져오기", 
-         response_model=ScoreResponseModel,
+         response_model=ScoreListResponseModel,
          description="학번을 기반으로 점수를 가져옵니다. 학번을 입력하지 않을 경우 모든 점수 데이터를 가져옵니다.",
          status_code=200,
          tags=["Score", "Load"])
@@ -79,6 +79,7 @@ async def put_score(auth: dict = Depends(auth),
     if auth["error"]:
         raise auth["obj"]
     obj = {
+        "student_id": player_id,
         "time_score": time,
         "action_score": action,
         "overall_score": score
