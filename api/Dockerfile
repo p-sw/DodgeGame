@@ -6,10 +6,10 @@ WORKDIR /app
 
 COPY requirements.txt /app
 
-RUN apk add --no-cache --virtual .build-deps gcc musl-dev ; \
-    pip install -r requirements.txt ; \
-    apk del .build-deps gcc musl-dev ; \
-    rm -f /var/cache/apk/*
+RUN apk add build-base
+
+RUN apk add --no-cache supervisor ; \
+    pip install -r requirements.txt
 
 COPY . /app/
 
