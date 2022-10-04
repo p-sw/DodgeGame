@@ -109,7 +109,14 @@ async def put_score(auth: dict = Depends(auth),
          description="학번을 기반으로 플레이한 횟수를 가져옵니다.",
          tags=["PlayCount", "Load"])
 async def get_playcount(player_id: str = Query(..., title="학번", description="플레이 횟수를 가져올 학생의 학번")):
-    return await database.fetch_one(playcount_records.select().where(playcount_records.c.student_id == player_id))
+    res = await row_to_dict([column.key for column in playcount_records.columns], await database.fetch_one(playcount_records.select().where(playcount_records.c.student_id == player_id)))
+    if res:
+        return res
+    else:
+        return {
+            "student_id": player_id,
+            "playcount": 0
+        }
 
 @app.put('/put-playcount',
          summary="플레이 횟수 저장",
