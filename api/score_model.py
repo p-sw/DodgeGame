@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 class SingleScoreResponseModel(BaseModel):
-    key: str = Field(..., description="학번")
+    student_id: str = Field(..., description="학번")
     time_score: int = Field(..., description="시간 점수")
     action_score: int = Field(..., description="액션 점수")
     overall_score: int = Field(..., description="전체 점수")
@@ -9,7 +9,7 @@ class SingleScoreResponseModel(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "key": "10101",
+                "student_id": "10101",
                 "time_score": 20000,
                 "action_score": 2000,
                 "overall_score": 22000
@@ -17,7 +17,7 @@ class SingleScoreResponseModel(BaseModel):
         }
 
 class ScoreResponseModel(BaseModel):
-    key: str = Field(..., description="학번")
+    student_id: str = Field(..., description="학번")
     time_score: int = Field(..., description="시간 점수")
     action_score: int = Field(..., description="액션 점수")
     overall_score: int = Field(..., description="전체 점수")
@@ -26,13 +26,13 @@ class ScoreResponseModel(BaseModel):
         schema_extra = {
             "example": [
                 {
-                    "key": "10101",
+                    "student_id": "10101",
                     "time_score": 20000,
                     "action_score": 2000,
                     "overall_score": 22000
                 },
                 {
-                    "key": "10102",
+                    "student_id": "10102",
                     "time_score": 21000,
                     "action_score": 0,
                     "overall_score": 21000
