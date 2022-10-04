@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from fastapi import Field
+from pydantic import BaseModel, Field
 
 class PlayCountResponseModel(BaseModel):
     student_id: str = Field(..., description="학번")
