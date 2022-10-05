@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Depends, Path, Query, HTTPException, Body
+from fastapi import FastAPI, Depends, Query, HTTPException
 
-from os import environ
 from secrets import token_hex
 
 import databases
