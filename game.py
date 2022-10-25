@@ -1,4 +1,5 @@
 import pygame as pg
+from secrets import token_hex
 
 from lib.scene import StudentIDInputScene
 
@@ -20,13 +21,17 @@ class Game:
         pg.display.set_caption("DodgeGame")
         self.clock = pg.time.Clock()
         self.finished = False
+        self.offline = True
+        self.session = str(token_hex(20))
         
         self.student_grade = None
         self.student_class = None
         self.student_number = None
         
         self.change_scene(StudentIDInputScene)
-    
+
+        self.playable_count = 3
+
     def start(self):
         while not self.finished:
             self.time = pg.time.get_ticks()

@@ -128,10 +128,14 @@ class Text(pg.sprite.Sprite):
         if self.frame_event:
             self.frame_event(events)
             
-    def get_another_text(self, text, kill=True):
+    def get_another_text(self, text, kill=True, optional_color=None):
         if kill:
             self.kill()
-        return Text(text, self.font, self.color, self.center, self.text_shadow_obj, self.frame_event)
+        if optional_color:
+            color = optional_color
+        else:
+            color = self.color
+        return Text(text, self.font, color, self.center, self.text_shadow_obj, self.frame_event)
             
 class ButtonEvent:
     def __init__(self, gameObject, callback):

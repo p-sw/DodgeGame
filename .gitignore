@@ -4,4 +4,4 @@ build
 dist
 .env
 auth.txt
-db.sqlite3
+.idea

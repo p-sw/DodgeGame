@@ -4,8 +4,12 @@ from random import choice
 from pathlib import Path
 from os import path
 import pygame as pg
-from threading import Thread
 import requests
+from requests.exceptions import Timeout, ConnectionError
+from time import sleep
+from threading import Thread
+from datetime import datetime
+from datetime import timezone, timedelta
 
 from lib.object import Star
 from lib.object import Text, Color, Button, Colors, ButtonEvent, TextShadowEffect, NumberInputBox
@@ -96,6 +100,7 @@ class StudentIDInputScene(Scene):
         
         def game_start(gameObject):
             inputted_id = self.groups['inputbox'].sprites()[0].get_text()
+            gameObject.student_id = inputted_id
             gameObject.student_grade = int(inputted_id[0])
             gameObject.student_class = int(inputted_id[1:3])
             gameObject.student_number = int(inputted_id[3:])
@@ -170,39 +175,52 @@ class IDMenuTransition(Scene):
         )
         self.create_group('loading_status', loading_status)
         
-        self.check_delay = 3000
-        
-        self.server_ok = None
-        
-        self.server_check_time = None
+        self.server_ok = False
+        self.server_check_retries = 0
+        self.server_check_retries_max = 3
+        self.server_check_break = False
 
-        self.server_thread = None
+        self.sleep_before_continue = False
     
     def update(self, events):
         super().update(events)
-        if self.server_ok is None and not self.server_thread:
-            def server_thread(self):
-                try:
-                    req = requests.get("https://game.api.sserve.work/check", timeout=10)
-                    if req.status_code == 200:
-                        self.server_ok = True
-                    else:
-                        self.server_ok = False
-                except:
-                    self.server_ok = False
-            self.server_thread = Thread(target=server_thread, args=(self,))
-            self.server_thread.run()
-        elif not self.server_ok:
-            self.add_item('loading_status', self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 실패"))
-        elif self.server_ok:
-            self.add_item('loading_status', self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공"))
-        
-        if self.server_ok is not None:
-            if not self.server_check_time:
-                self.server_check_time = pg.time.get_ticks()
-            else:
-                if pg.time.get_ticks() - self.server_check_time > self.check_delay:
-                    self.gameObject.change_scene(MenuScene)
+        if not self.server_check_break and (not self.server_ok and self.server_check_retries < self.server_check_retries_max):
+            try:
+                res = requests.get('https://game-api.sserve.work/check')
+                if res.status_code == 200:
+                    self.server_ok = True
+                    new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공!")
+                    self.groups['loading_status'].add(new_text)
+                else:
+                    self.server_check_retries += 1
+                    new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 확인 실패! 재시도 중..")
+                    self.groups['loading_status'].add(new_text)
+            except Timeout as e:
+                self.server_check_retries += 1
+                new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 확인 실패! 재시도 중..")
+                self.groups['loading_status'].add(new_text)
+            except ConnectionError as e:
+                self.server_check_break = True
+                new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결에 실패했습니다. 인터넷 상태를 확인하세요.")
+                self.groups['loading_status'].add(new_text)
+            sleep(1)
+            return
+        elif not self.server_check_break and (not self.server_ok and self.server_check_retries >= self.server_check_retries_max):
+            self.server_check_break = True
+            new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결에 실패했습니다. 인터넷 상태를 확인하세요.")
+            self.groups['loading_status'].add(new_text)
+            sleep(1)
+            return
+        elif self.server_check_break or self.server_ok or self.server_check_retries >= self.server_check_retries_max:
+            if not self.sleep_before_continue:
+                sleep(1)
+                self.sleep_before_continue = True
+                return
+            new_text = self.groups['loading_status'].sprites()[0].get_another_text("로딩 중...")
+            self.groups['loading_status'].add(new_text)
+            self.gameObject.offline = not self.server_ok
+            self.gameObject.change_scene(MenuScene, {'offline': not self.server_ok})
+
 
 class MenuScene(Scene):
     def __init__(self, gameObject, data):
@@ -210,6 +228,44 @@ class MenuScene(Scene):
         self.screen_color = Colors.BLACK.as_iter()
         
         title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
+        smaller_title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 27)
+
+        if data['offline']:
+            playcount_text = Text(
+                "오프라인 모드",
+                smaller_title_font,
+                Colors.BLACK + Color(100, 100, 100),
+                (
+                    gameObject.screen.get_width() / 2,
+                    gameObject.screen.get_height() / 6 - 100
+                ),
+                TextShadowEffect(Colors.BLACK + Color(120, 120, 120), (2, 2))
+            )
+        else:
+            try:
+                res = requests.get('https://game.api.sserve.work/get-playcount',
+                                   params={'player_id': gameObject.student_id},
+                                   timeout=5)
+                if res.status_code == 200:
+                    playcount = res.json()['playcount']
+                else:
+                    playcount = 0
+            except Timeout as e:
+                playcount = 0
+            except ConnectionError as e:
+                playcount = 0
+            playcount_text = Text(
+                f"플레이 가능 횟수: {gameObject.playable_count - playcount}회",
+                smaller_title_font,
+                Colors.BLACK + Color(100, 100, 100),
+                (
+                    gameObject.screen.get_width() / 2,
+                    gameObject.screen.get_height() / 6 - 100
+                ),
+                TextShadowEffect(Colors.BLACK + Color(120, 120, 120), (2, 2))
+            )
+        self.create_group('playcount', playcount_text)
+
         button_font = pg.font.Font(font_located('ONE Mobile Bold'), 30)
         title = Text("부평고 2022 코딩동아리 게임", 
                      title_font, 
@@ -419,9 +475,9 @@ class ResultScene(Scene):
         self.groups = data["inheritGroups"]
         self.screen = gameObject.screen
         
-        self.score = data["score"]
-        self.elapsed_time = data["elapsedTime"]
-        self.total_score = data["totalScore"]
+        self.score = data["score"]  # action
+        self.elapsed_time = data["elapsedTime"]  # time
+        self.total_score = data["totalScore"]  # overall
         
         self.anim_current_score = 0
         self.anim_current_elapsed_time = 0
@@ -481,6 +537,7 @@ class ResultScene(Scene):
             Text("다시하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene, {"inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation})),
         )
+        self.RestartBtn.disabled = True
         
         self.MenuBtn = Button(
             (200, 50),
@@ -489,6 +546,7 @@ class ResultScene(Scene):
             Text("메뉴로", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene, {"inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation}))
         )
+        self.MenuBtn.disabled = True
         
         self.QuitBtn = Button(
             (200, 50),
@@ -497,6 +555,7 @@ class ResultScene(Scene):
             Text("종료하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
+        self.QuitBtn.disabled = True
         
         # element repositioning code
         # because of transition
@@ -512,12 +571,68 @@ class ResultScene(Scene):
         
         # for star effect
         self.last_star_creation = data["lastStarCreation"]
+
+        def save_score(time_score, action_score, overall_score):
+            try:
+                res = requests.put("https://game-api.sserve.work/put-score",
+                                   params={
+                                        "player_id": gameObject.student_id,
+                                        "key": "9a6921172fc66868d5831c52b0b9766d7bb48a8f",
+                                        "time": time_score,
+                                        "action": action_score,
+                                        "overall": overall_score
+                                   })
+            except Timeout as e:
+                print("Timeout")
+            print(res.json())
+
+        def save_score_to_file(time_score, action_score, overall_score):
+            with open(f"{gameObject.session}.txt", "a" if path.exists(f"{gameObject.session}.txt") else "w") as f:
+                f.write(f"{datetime.now(tz=timezone(timedelta(hours=9))).strftime('%H:%M:%S')} {time_score} {action_score} {overall_score}")
+
+        def save_playcount():
+            try:
+                res = requests.put("https://game-api.sserve.work/put-score",
+                                   params={
+                                       "player_id": gameObject.student_id,
+                                       "key": "9a6921172fc66868d5831c52b0b9766d7bb48a8f",
+                                   })
+            except Timeout as e:
+                print("Timeout")
+            print("done")
+
+        if not gameObject.offline:
+            self.save_score_thread = Thread(target=save_score, args=(self.elapsed_time, self.score, self.total_score))
+            self.save_to_file_thread = Thread(target=save_score_to_file, args=(self.elapsed_time, self.score, self.total_score))
+            self.save_playcount_thread = Thread(target=save_playcount)
+            self.thread_start = False
+        self.offline = gameObject.offline
+
+        thread_check_text = Text(
+            "점수를 저장하는 중입니다..",
+            pg.font.Font(font_located('BlackHanSans-Regular'), 27),
+            Colors.ORANGE,
+            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 6 - 100),
+            TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2))
+        )
+        self.create_group("thread_check", thread_check_text)
     
     def update(self, events):
         # star effect
         if pg.time.get_ticks() - self.last_star_creation > star_effect_delay:
             self.add_item("stars", Star(randint(0, pg.display.get_window_size()[0]), randint(0, pg.display.get_window_size()[1])))
             self.last_star_creation = pg.time.get_ticks()
+        # thread check
+        if not self.offline:
+            if not self.thread_start:
+                self.save_score_thread.start()
+                self.save_to_file_thread.start()
+                self.save_playcount_thread.start()
+                self.thread_start = True
+            if not self.save_score_thread.is_alive() and not self.save_playcount_thread.is_alive():
+                new_text = self.groups["thread_check"].sprites()[0].get_another_text("데이터를 서버에 저장했습니다!", optional_color=Colors.GREEN)
+                self.groups["thread_check"].add(new_text)
+
         # main update
         super().update(events)
         if self.transitioning:
