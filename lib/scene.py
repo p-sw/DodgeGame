@@ -577,10 +577,10 @@ class ResultScene(Scene):
                 res = requests.put("https://game-api.sserve.work/put-score",
                                    params={
                                         "player_id": gameObject.student_id,
-                                        "key": "9a6921172fc66868d5831c52b0b9766d7bb48a8f",
+                                        "key": "3621c059501683cd65fb455fc3754eab86e5587d",
                                         "time": time_score,
                                         "action": action_score,
-                                        "overall": overall_score
+                                        "score": overall_score
                                    })
             except Timeout as e:
                 print("Timeout")
@@ -592,10 +592,10 @@ class ResultScene(Scene):
 
         def save_playcount():
             try:
-                res = requests.put("https://game-api.sserve.work/put-score",
+                res = requests.put("https://game-api.sserve.work/put-playcount",
                                    params={
                                        "player_id": gameObject.student_id,
-                                       "key": "9a6921172fc66868d5831c52b0b9766d7bb48a8f",
+                                       "key": "3621c059501683cd65fb455fc3754eab86e5587d",
                                    })
             except Timeout as e:
                 print("Timeout")
@@ -632,6 +632,9 @@ class ResultScene(Scene):
             if not self.save_score_thread.is_alive() and not self.save_playcount_thread.is_alive():
                 new_text = self.groups["thread_check"].sprites()[0].get_another_text("데이터를 서버에 저장했습니다!", optional_color=Colors.GREEN)
                 self.groups["thread_check"].add(new_text)
+                self.RestartBtn.disabled = False
+                self.MenuBtn.disabled = False
+                self.QuitBtn.disabled = False
 
         # main update
         super().update(events)
