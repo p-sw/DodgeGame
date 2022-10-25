@@ -134,6 +134,27 @@ async def put_playcount(auth: dict = Depends(auth),
         return PlayCountResponseModel(id=player_id, count=data.count)
 
 
+@app.put("/put-playcount-any",
+         summary="플레이 횟수 저장",
+         status_code=201,
+         response_model=PlayCountResponseModel,
+         description="플레이 횟수를 저장합니다.")
+async def put_playcount_any(auth: dict = Depends(auth),
+                            player_id: int = Query(..., title="학번"),
+                            count: int = Query(..., title="플레이 횟수")):
+    if auth["error"]:
+        raise auth["obj"]
+    with Session() as session:
+        data = session.query(Playcount).filter(Playcount.id == player_id).first()
+        if data:
+            data.count = count
+        else:
+            data = Playcount(id=player_id, count=count)
+            session.add(data)
+        session.commit()
+        return PlayCountResponseModel(id=player_id, count=data.count)
+
+
 @app.get("/check", status_code=200)
 async def checkalive():
     return {"alive": True}
