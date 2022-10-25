@@ -6,7 +6,8 @@
 
 # TODO
 + 게임
-  - 이미지대로 API와 통신하도록 로직 변경
+  - API score 넣는 곳에 season 추가 (API에서 받아오기).
 + 웹
-  - API와 연동한 웹페이지 만들기 (프론트엔드 가능)
-  - Github Pages 이용?
+  - 관리자 페이지 만들기
+  - 랭킹 페이지 만들기
+  - season을 Admin에서 API로 옮기기
