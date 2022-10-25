@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jgthms/minireset.css@master/minireset.min.css">
+    <title>Index</title>
+</head>
+<body>
+    <main>
+        <section class="btns">
+            <button id="logout">로그아웃</button>
+        </section>
+        <hr />
+        <section class="form">
+            <h1>회차 조정</h1>
+            <form action="/set-season" method="post">
+                <div class="form-group">
+                    <label for="season">회차</label>
+                    <input type="number" id="season" name="season" placeholder="회차" />
+                </div>
+                <button type="submit">조정</button>
+            </form>
+        </section>
+        <hr />
+        <section class="form">
+            <h1>점수 조정</h1>
+            <form action="/set-score" method="post">
+                <div class="form-group">
+                    <label for="time">시간 점수</label>
+                    <input type="number" id="time" name="time" placeholder="시간 점수" />
+                </div>
+                <div class="form-group">
+                    <label for="action">액션 점수</label>
+                    <input type="number" id="action" name="action" placeholder="액션 점수" />
+                </div>
+                <button type="submit">조정</button>
+            </form>
+        </section>
+        <hr />
+        <section class="form">
+            <h1>플레이 횟수 조정</h1>
+            <form action="/set-playcount" method="post">
+                <div class="form-group">
+                    <label for="playcount">플레이 횟수</label>
+                    <input type="number" id="playcount" name="season" placeholder="플레이 횟수" />
+                </div>
+                <button type="submit">조정</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
