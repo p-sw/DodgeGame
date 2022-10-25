@@ -5,3 +5,5 @@ dist
 .env
 auth.txt
 .idea
+*.sqlite
+*.sqlite3
