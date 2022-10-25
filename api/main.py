@@ -1,14 +1,17 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
 import sqlalchemy as db
 
-from pydantic import BaseModel, Field
 from secrets import token_hex
 
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from playcount_model import PlayCountResponseModel
+from score_model import SingleScoreResponseModel, ScoreListResponseModel
+
 auth_key = token_hex(20)
 with open("auth.txt", "w", encoding="utf-8") as f:
     f.write(f"----------AUTH KEY----------\n{auth_key}\n----------AUTH KEY END----------")
+print("PRIVATE AUTH KEY:", auth_key)
 
 app = FastAPI(title="부평고 2022 코딩 동아리", description="2022년도 부평고등학교 코딩 동아리에서 만든 게임에 쓰이는 백엔드 API입니다.", docs_url=None,
               redoc_url="/docs")
@@ -39,70 +42,34 @@ base.metadata.create_all(engine)
 
 
 async def auth(key: str = Query(..., title="보안 키")):
-    if key == auth_key:
+    print(str(auth_key)+",", "Type: "+str(type(auth_key)))
+    print(key+",", "Type: "+str(type(key)))
+    if key == str(auth_key):
         return {"error": False, "key": key}
     else:
         return {"error": True, "obj": HTTPException(status_code=403, detail="보안 키가 올바르지 않습니다.")}
 
 
-class SingleScoreResponseModel(BaseModel):
-    key: str = Field(..., description="학번")
-    time_score: int = Field(..., description="시간 점수")
-    action_score: int = Field(..., description="액션 점수")
-    overall_score: int = Field(..., description="전체 점수")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "key": "10101",
-                "time_score": 20000,
-                "action_score": 2000,
-                "overall_score": 22000
-            }
-        }
-
-
-class ScoreResponseModel(BaseModel):
-    key: str = Field(..., description="학번")
-    time_score: int = Field(..., description="시간 점수")
-    action_score: int = Field(..., description="액션 점수")
-    overall_score: int = Field(..., description="전체 점수")
-
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "key": "10101",
-                    "time_score": 20000,
-                    "action_score": 2000,
-                    "overall_score": 22000
-                },
-                {
-                    "key": "10102",
-                    "time_score": 21000,
-                    "action_score": 0,
-                    "overall_score": 21000
-                }
-            ]
-        }
-
-
 @app.get('/get-score',
          summary="점수 가져오기",
-         response_model=ScoreResponseModel,
+         response_model=ScoreListResponseModel or SingleScoreResponseModel,
          description="학번을 기반으로 점수를 가져옵니다. 학번을 입력하지 않을 경우 모든 점수 데이터를 가져옵니다.",
          status_code=200)
-async def get_score(player_id: str = Query(None, title="학번", description="스코어를 가져올 학생의 학번")):
-    if player_id:
-        session = Session()
-        data = session.query(Score).filter(Score.id == player_id).all()
-        session.close()
-        return data
-    else:
-        session = Session()
-        data = session.query(Score).all()
-        session.close()
-        return data
+async def get_score(player_id: str = Query(None, title="학번", description="스코어를 가져올 학생의 학번"),
+                    season: int = Query(None, title="시즌", description="회차을 선택합니다.")):
+    with Session() as session:
+        if player_id:
+            if session.query(Score).filter(Score.id == player_id).count() == 0:
+                return {"key": player_id, "time_score": -1, "action_score": -1, "overall_score": -1}
+            data = session.query(Score).filter(Score.id == player_id).first()
+            return SingleScoreResponseModel(id=player_id, season=data.season, score=data.score, action=data.action, time=data.time)
+        else:
+            if season:
+                data = session.query(Score).filter(Score.season == season).all()
+                return ScoreListResponseModel(scores=[SingleScoreResponseModel(id=i.id, season=i.season, score=i.score, action=i.action, time=i.time) for i in data])
+            else:
+                data = session.query(Score).all()
+                return ScoreListResponseModel(scores=[SingleScoreResponseModel(id=i.id, season=i.season, score=i.score, action=i.action, time=i.time) for i in data])
 
 
 @app.put("/put-score",
@@ -111,54 +78,60 @@ async def get_score(player_id: str = Query(None, title="학번", description="�
          response_model=SingleScoreResponseModel,
          description="학번을 기반으로 점수를 저장합니다. 학번이 이미 존재할 경우 기존 점수를 덮어씁니다.")
 async def put_score(auth: dict = Depends(auth),
+                    season: int = Query(..., title="회차"),
                     player_id: int = Query(..., title="학번"),
                     time: int = Query(..., title="시간 점수"),
                     action: int = Query(..., title="액션 점수"),
                     score: int = Query(..., title="점수 합계")):
     if auth["error"]:
         raise auth["obj"]
-    session = Session()
-    data = session.query(Score).filter(Score.id == player_id).first()
-    if data:
-        data.time = time
-        data.action = action
-        data.score = score
-    else:
-        data = Score(id=player_id, time=time, action=action, score=score)
-        session.add(data)
-    session.commit()
-    session.close()
-    return data
+    with Session() as session:
+        data = session.query(Score).filter(Score.id == player_id).first()
+        if data:
+            data.time = time
+            data.action = action
+            data.score = score
+        else:
+            data = Score(id=player_id, season=season, time=time, action=action, score=score)
+            session.add(data)
+        session.commit()
+        return SingleScoreResponseModel(id=player_id, season=season, time=time, action=action, score=score)
 
 
 @app.get("/get-playcount",
          summary="플레이 횟수 가져오기",
          status_code=200,
+         response_model=PlayCountResponseModel,
          description="플레이 횟수를 가져옵니다.")
-async def get_playcount():
-    session = Session()
-    data = session.query(Playcount).first()
-    session.close()
-    return data
+async def get_playcount(player_id: int = Query(..., title="학번")):
+    with Session() as session:
+        data = session.query(Playcount).filter(Playcount.id == player_id).first()
+        if not data:
+            data = Playcount(id=player_id, count=0)
+            session.add(data)
+            session.commit()
+        return PlayCountResponseModel(id=player_id, count=data.count)
 
 
 @app.put("/put-playcount",
          summary="플레이 횟수 저장",
          status_code=201,
+         response_model=PlayCountResponseModel,
          description="플레이 횟수를 저장합니다.")
-async def put_playcount(auth: dict = Depends(auth)):
+async def put_playcount(auth: dict = Depends(auth),
+                        player_id: int = Query(..., title="학번")):
     if auth["error"]:
         raise auth["obj"]
-    session = Session()
-    data = session.query(Playcount).first()
-    if data:
-        data.count = data.count + 1
-    else:
-        data = Playcount(count=1)
-        session.add(data)
-    session.commit()
-    session.close()
-    return data
+    with Session() as session:
+        data = session.query(Playcount).filter(Playcount.id == player_id).first()
+        if data:
+            data.count = data.count + 1
+        else:
+            print("Here!")
+            data = Playcount(id=player_id, count=1)
+            session.add(data)
+        session.commit()
+        return PlayCountResponseModel(id=player_id, count=data.count)
 
 
 @app.get("/check", status_code=200)

@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field
 
+
 class PlayCountResponseModel(BaseModel):
-    student_id: str = Field(..., description="학번")
-    playcount: int = Field(..., description="플레이 횟수")
+    id: str = Field(..., description="학번")
+    count: int = Field(..., description="플레이 횟수")
     
     class Config:
         schema_extra = {

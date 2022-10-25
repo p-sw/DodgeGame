@@ -24,7 +24,7 @@ class Game:
         self.offline = True
         self.session = str(token_hex(20))
         self.api_url = "http://localhost:5000"
-        self.ssl = False
+        self.api_authkey = "29ef4415905a63f012beb73ceed61b9a187fad0b"
         
         self.student_grade = None
         self.student_class = None
