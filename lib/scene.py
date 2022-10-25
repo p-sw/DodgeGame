@@ -186,7 +186,7 @@ class IDMenuTransition(Scene):
         super().update(events)
         if not self.server_check_break and (not self.server_ok and self.server_check_retries < self.server_check_retries_max):
             try:
-                res = requests.get('https://game-api.sserve.work/check')
+                res = requests.get(f'{self.gameObject.api_url}/check')
                 if res.status_code == 200:
                     self.server_ok = True
                     new_text = self.groups['loading_status'].sprites()[0].get_another_text("서버 연결 성공!")
@@ -219,7 +219,7 @@ class IDMenuTransition(Scene):
             new_text = self.groups['loading_status'].sprites()[0].get_another_text("로딩 중...")
             self.groups['loading_status'].add(new_text)
             self.gameObject.offline = not self.server_ok
-            self.gameObject.change_scene(MenuScene, {'offline': not self.server_ok})
+            self.gameObject.change_scene(MenuScene)
 
 
 class MenuScene(Scene):
@@ -230,7 +230,7 @@ class MenuScene(Scene):
         title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 40)
         smaller_title_font = pg.font.Font(font_located('BlackHanSans-Regular'), 27)
 
-        if data['offline']:
+        if gameObject.offline:
             playcount_text = Text(
                 "오프라인 모드",
                 smaller_title_font,
@@ -243,7 +243,7 @@ class MenuScene(Scene):
             )
         else:
             try:
-                res = requests.get('https://game.api.sserve.work/get-playcount',
+                res = requests.get(f'{gameObject.api_url}/get-playcount',
                                    params={'player_id': gameObject.student_id},
                                    timeout=5)
                 if res.status_code == 200:
@@ -574,7 +574,7 @@ class ResultScene(Scene):
 
         def save_score(time_score, action_score, overall_score):
             try:
-                res = requests.put("https://game-api.sserve.work/put-score",
+                res = requests.put(f"{gameObject.api_url}/put-score",
                                    params={
                                         "player_id": gameObject.student_id,
                                         "key": "3621c059501683cd65fb455fc3754eab86e5587d",
@@ -592,7 +592,7 @@ class ResultScene(Scene):
 
         def save_playcount():
             try:
-                res = requests.put("https://game-api.sserve.work/put-playcount",
+                res = requests.put(f"{gameObject.api_url}/put-playcount",
                                    params={
                                        "player_id": gameObject.student_id,
                                        "key": "3621c059501683cd65fb455fc3754eab86e5587d",

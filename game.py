@@ -23,6 +23,8 @@ class Game:
         self.finished = False
         self.offline = True
         self.session = str(token_hex(20))
+        self.api_url = "http://localhost:5000"
+        self.ssl = False
         
         self.student_grade = None
         self.student_class = None
