@@ -2,8 +2,6 @@ from fastapi import FastAPI, Depends, Query, HTTPException
 import sqlalchemy as db
 
 from pydantic import BaseModel, Field
-
-from os import environ
 from secrets import token_hex
 
 from sqlalchemy.orm import declarative_base, sessionmaker
