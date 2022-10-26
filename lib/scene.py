@@ -262,9 +262,9 @@ class MenuScene(Scene):
                 playcount = 0
             except ConnectionError as e:
                 playcount = 0
-            playable = gameObject.playable_count - playcount
+            gameObject.playable = gameObject.playable_count - playcount
             playcount_text = Text(
-                f"플레이 가능 횟수: {playable}회",
+                f"플레이 가능 횟수: {gameObject.playable}회",
                 smaller_title_font,
                 Colors.BLACK + Color(100, 100, 100),
                 (
@@ -649,6 +649,7 @@ class ResultScene(Scene):
             self.save_to_file_thread = Thread(target=save_score_to_file,
                                               args=(self.elapsed_time, self.score, self.total_score))
             self.save_playcount_thread = Thread(target=save_playcount)
+            gameObject.playable -= 1 if gameObject.playable > 0 else 0
             self.thread_start = False
         self.offline = gameObject.offline
 
@@ -678,7 +679,8 @@ class ResultScene(Scene):
                 new_text = self.groups["thread_check"].sprites()[0].get_another_text("데이터를 서버에 저장했습니다!",
                                                                                      optional_color=Colors.GREEN)
                 self.groups["thread_check"].add(new_text)
-                self.RestartBtn.disabled = False
+                if gameObject.playable > 0:
+                    self.RestartBtn.disabled = False
                 self.MenuBtn.disabled = False
                 self.QuitBtn.disabled = False
 
