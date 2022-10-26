@@ -327,8 +327,9 @@ class MenuScene(Scene):
             Text("종료하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
-        if playable == 0:
-            start_button.disabled = True
+        if not gameObject.offline:
+            if playable == 0:
+                start_button.disabled = True
         self.create_group("buttons", start_button, help_button, quit_button)
 
         # for star effect
