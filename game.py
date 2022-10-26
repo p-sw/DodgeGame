@@ -23,8 +23,9 @@ class Game:
         self.finished = False
         self.offline = True
         self.session = str(token_hex(20))
-        self.api_url = "http://localhost:5000"
-        self.api_authkey = "29ef4415905a63f012beb73ceed61b9a187fad0b"
+        self.api_url = "https://game-api.sserve.work"
+        with open("secrets", "r", encoding="utf-8") as f:
+            self.api_authkey = f.readline().replace("\n", "")
         
         self.student_grade = None
         self.student_class = None
