@@ -616,10 +616,14 @@ class ResultScene(Scene):
 
         def save_score(time_score, action_score, overall_score):
             try:
+                season_req = requests.get(f"{gameObject.api_url}/get-season")
+                season = season_req.json()["season"]
+
                 res = requests.put(f"{gameObject.api_url}/put-score",
                                    params={
                                        "player_id": gameObject.student_id,
                                        "key": gameObject.api_authkey,
+                                       "season": int(season),
                                        "time": time_score,
                                        "action": action_score,
                                        "score": overall_score
@@ -629,7 +633,7 @@ class ResultScene(Scene):
                 print("Timeout")
 
         def save_score_to_file(time_score, action_score, overall_score):
-            with open(f"{gameObject.session}.txt", "a" if path.exists(f"{gameObject.session}.txt") else "w") as f:
+            with open(f"session_{gameObject.session}.txt", "a" if path.exists(f"{gameObject.session}.txt") else "w") as f:
                 f.write(
                     f"{datetime.now(tz=timezone(timedelta(hours=9))).strftime('%H:%M:%S')} {time_score} {action_score} {overall_score}")
 
