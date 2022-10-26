@@ -19,11 +19,11 @@ BASEDIR = Path(__file__).parent.parent.absolute()
 
 
 def font_located(fontname):
-    try:
-        return path.join(BASEDIR, 'assets', 'font', fontname + '.ttf')
-    except FileNotFoundError:
+    res_path = path.join(BASEDIR, 'assets', 'font', fontname + '.ttf')
+    if not path.exists(res_path):
         return f'assets/font/{fontname}.ttf'
-
+    return res_path
+    
 
 class Scene:
     def __init__(self):
