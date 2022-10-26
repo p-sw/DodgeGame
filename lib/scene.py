@@ -19,8 +19,10 @@ BASEDIR = Path(__file__).parent.parent.absolute()
 
 
 def font_located(fontname):
-    # return f'assets/font/{fontname}.ttf'
-    return path.join(BASEDIR, 'assets', 'font', fontname + '.ttf')
+    try:
+        return path.join(BASEDIR, 'assets', 'font', fontname + '.ttf')
+    except FileNotFoundError:
+        return f'assets/font/{fontname}.ttf'
 
 
 class Scene:
