@@ -262,8 +262,9 @@ class MenuScene(Scene):
                 playcount = 0
             except ConnectionError as e:
                 playcount = 0
+            playable = gameObject.playable_count - playcount
             playcount_text = Text(
-                f"플레이 가능 횟수: {gameObject.playable_count - playcount}회",
+                f"플레이 가능 횟수: {playable}회",
                 smaller_title_font,
                 Colors.BLACK + Color(100, 100, 100),
                 (
@@ -324,6 +325,8 @@ class MenuScene(Scene):
             Text("종료하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
+        if playable == 0:
+            start_button.disabled = True
         self.create_group("buttons", start_button, help_button, quit_button)
 
         # for star effect
