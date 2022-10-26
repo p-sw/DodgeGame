@@ -306,7 +306,7 @@ class MenuScene(Scene):
                 "inheritGroups": self.inherit_groups("title", "buttons", "stars"),
                 "lastStarCreation": self.last_star_creation
             }))
-        ),
+        )
         help_button = Button(
             (200, 50),
             (
