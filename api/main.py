@@ -22,6 +22,8 @@ connection = engine.connect()
 base = declarative_base()
 Session = sessionmaker(bind=engine)
 
+season = 1
+
 
 class Score(base):
     __tablename__ = "score"
@@ -153,6 +155,26 @@ async def put_playcount_any(auth: dict = Depends(auth),
             session.add(data)
         session.commit()
         return PlayCountResponseModel(id=player_id, count=data.count)
+
+
+@app.get("/get-season",
+         summary="회차 가져오기",
+         status_code=200,
+         description="회차를 가져옵니다.")
+async def get_season():
+    global season
+    return {"season": season}
+
+
+@app.put("/set-season",
+         summary="회차 저장",
+         status_code=201,
+         description="회차를 저장합니다.")
+async def set_season(auth: dict = Depends(auth),
+                     updated_season: int = Query(...), title="회차"):
+    global season
+    season = updated_season
+    return {"season": season}
 
 
 @app.get("/check", status_code=200)
