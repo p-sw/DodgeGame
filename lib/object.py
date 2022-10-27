@@ -198,8 +198,8 @@ class Button(pg.sprite.Sprite):
 class Player(pg.sprite.Sprite):
     def __init__(self, center, color:Color=Colors.BLUE):
         super().__init__()
-        self.image = pg.Surface((10, 10))
-        self.image.set_colorkey(Colors.GREEN.as_color())
+        self.image = pg.image.load("assets/image/player.png")
+        self.image.set_colorkey(Colors.WHITE.as_color())
         self.normal_hitbox_set_x = 10
         self.normal_hitbox_set_y = 10
         self.point_hitbox_expand_x = 20
@@ -214,8 +214,7 @@ class Player(pg.sprite.Sprite):
             "point_hitbox": point_hitbox.scale((self.normal_hitbox_set_x + self.point_hitbox_expand_x, 
                                                 self.normal_hitbox_set_y + self.point_hitbox_expand_y))
         }
-        
-        self.image.fill(color.as_iter())
+
         self.rect = self.image.get_rect(center=center)
         self.speed = 3
         self.speed_diag = self.speed / (2**(1/2))
