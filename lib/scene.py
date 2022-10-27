@@ -96,8 +96,8 @@ class StudentIDInputScene(Scene):
                 Colors.WHITE - Color(40, 40, 40),
                 Colors.ORANGE + Color(60, 60, 60),
                 Colors.BLACK,
+                Colors.GREEN,
                 Colors.WHITE,
-                Colors.ORANGE + Color(20, 20, 20),
                 Colors.BLACK
             ],
             input_font
@@ -227,7 +227,10 @@ class IDMenuTransition(Scene):
                 return
             new_text = self.groups['loading_status'].sprites()[0].get_another_text("로딩 중...")
             self.groups['loading_status'].add(new_text)
-            self.gameObject.offline = not self.server_ok
+            if not self.gameObject.api_authkey:
+                self.gameObject.offline = True
+            else:
+                self.gameObject.offline = not self.server_ok
             self.gameObject.change_scene(MenuScene)
 
 
@@ -241,7 +244,7 @@ class MenuScene(Scene):
 
         if gameObject.offline:
             playcount_text = Text(
-                "오프라인 모드",
+                f"오프라인 모드 {'(서버 인증 키 확인 실패)' if not gameObject.api_authkey else ''}",
                 smaller_title_font,
                 Colors.BLACK + Color(100, 100, 100),
                 (
@@ -328,7 +331,7 @@ class MenuScene(Scene):
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
         if not gameObject.offline:
-            if playable == 0:
+            if gameObject.playable == 0:
                 start_button.disabled = True
         self.create_group("buttons", start_button, help_button, quit_button)
 
@@ -501,6 +504,7 @@ class ResultScene(Scene):
         self.screen_color = Colors.BLACK.as_iter()
         self.groups = data["inheritGroups"]
         self.screen = gameObject.screen
+        self.gameObject = gameObject
 
         self.score = data["score"]  # action
         self.elapsed_time = data["elapsedTime"]  # time
@@ -580,7 +584,6 @@ class ResultScene(Scene):
             ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(GameScene, {
                 "inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation})),
         )
-        self.RestartBtn.disabled = True
 
         self.MenuBtn = Button(
             (200, 50),
@@ -590,7 +593,6 @@ class ResultScene(Scene):
             ButtonEvent(gameObject, lambda gameObject: gameObject.change_scene(MenuScene, {
                 "inheritGroups": self.inherit_groups("stars"), "lastStarCreation": self.last_star_creation}))
         )
-        self.MenuBtn.disabled = True
 
         self.QuitBtn = Button(
             (200, 50),
@@ -599,7 +601,6 @@ class ResultScene(Scene):
             Text("종료하기", button_font, Colors.WHITE),
             ButtonEvent(gameObject, lambda gameObject: gameObject.quit())
         )
-        self.QuitBtn.disabled = True
 
         # element repositioning code
         # because of transition
@@ -636,9 +637,9 @@ class ResultScene(Scene):
                 print("Timeout")
 
         def save_score_to_file(time_score, action_score, overall_score):
-            with open(f"session_{gameObject.session}.txt", "a" if path.exists(f"{gameObject.session}.txt") else "w") as f:
-                f.write(
-                    f"{datetime.now(tz=timezone(timedelta(hours=9))).strftime('%H:%M:%S')} {time_score} {action_score} {overall_score}")
+            filename = f"session_{gameObject.student_grade}_{gameObject.student_class}_{gameObject.student_number}_{gameObject.session}.txt"
+            with open(filename, "a" if path.exists(filename) else "w") as f:
+                f.write(f"{datetime.now(tz=timezone(timedelta(hours=9))).strftime('%H:%M:%S')} {time_score} {action_score} {overall_score}")
 
         def save_playcount():
             try:
@@ -657,17 +658,20 @@ class ResultScene(Scene):
                                               args=(self.elapsed_time, self.score, self.total_score))
             self.save_playcount_thread = Thread(target=save_playcount)
             gameObject.playable -= 1 if gameObject.playable > 0 else 0
+            self.QuitBtn.disabled = True
+            self.RestartBtn.disabled = True
+            self.MenuBtn.disabled = True
             self.thread_start = False
-        self.offline = gameObject.offline
 
-        thread_check_text = Text(
-            "점수를 저장하는 중입니다..",
-            pg.font.Font(font_located('BlackHanSans-Regular'), 27),
-            Colors.ORANGE,
-            (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 6 - 100),
-            TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2))
-        )
-        self.create_group("thread_check", thread_check_text)
+            thread_check_text = Text(
+                "점수를 저장하는 중입니다..",
+                pg.font.Font(font_located('BlackHanSans-Regular'), 27),
+                Colors.ORANGE,
+                (gameObject.screen.get_width() / 2, gameObject.screen.get_height() / 6 - 100),
+                TextShadowEffect(Colors.ORANGE + Color(20, 20, 20), (2, 2))
+            )
+            self.create_group("thread_check", thread_check_text)
+        self.offline = gameObject.offline
 
     def update(self, events):
         # star effect
@@ -686,7 +690,7 @@ class ResultScene(Scene):
                 new_text = self.groups["thread_check"].sprites()[0].get_another_text("데이터를 서버에 저장했습니다!",
                                                                                      optional_color=Colors.GREEN)
                 self.groups["thread_check"].add(new_text)
-                if gameObject.playable > 0:
+                if self.gameObject.playable > 0:
                     self.RestartBtn.disabled = False
                 self.MenuBtn.disabled = False
                 self.QuitBtn.disabled = False

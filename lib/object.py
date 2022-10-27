@@ -167,14 +167,15 @@ class Button(pg.sprite.Sprite):
     
     def color_update(self):
         if self.disabled:
-            self.image.fill((self.colors[0] - Color(50, 50, 50)).as_iter())
-        if self.hovered:
-            if self.clicked:
-                self.image.fill(self.colors[2].as_iter())
-            else:
-                self.image.fill(self.colors[1].as_iter())
+            self.image.fill((Colors.WHITE - Color(100, 100, 100)).as_iter())
         else:
-            self.image.fill(self.colors[0].as_iter())
+            if self.hovered:
+                if self.clicked:
+                    self.image.fill(self.colors[2].as_iter())
+                else:
+                    self.image.fill(self.colors[1].as_iter())
+            else:
+                self.image.fill(self.colors[0].as_iter())
     
     def update(self, events):
         mouse_position = pg.mouse.get_pos()
@@ -398,10 +399,9 @@ class NumberInputBox(pg.sprite.Sprite):
             self.hovered = False
             self.pressed = False
         
-        
         if self.activated:  # key input event
             if pg.KEYDOWN in events:
-                if len(self.text) < self.limit:
+                if len(self.get_text()) < self.limit:
                     if pg.key.get_pressed()[pg.K_1]:
                         self.text += "1"
                     if pg.key.get_pressed()[pg.K_2]:
@@ -434,8 +434,15 @@ class NumberInputBox(pg.sprite.Sprite):
             self.image.fill(self.colors["hover"]["background"].as_iter())
         else:
             self.image.fill(self.colors["normal"]["background"].as_iter())
-        
-        pg.draw.rect(self.image, self.colors["normal"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 5)
+
+        if self.activated:
+            pg.draw.rect(self.image, self.colors["active"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 1)
+        elif self.pressed:
+            pg.draw.rect(self.image, self.colors["pressed"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 1)
+        elif self.hovered:
+            pg.draw.rect(self.image, self.colors["hover"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 1)
+        else:
+            pg.draw.rect(self.image, self.colors["normal"]["background_border"].as_iter(), (0, 0, self.rect.width, self.rect.height), 1)
         
         text = self.font.render(self.text, True, self.colors["normal"]["text"].as_iter())
         self.image.blit(text, (self.rect.width / 2 - text.get_width() / 2, self.rect.height / 2 - text.get_height() / 2))

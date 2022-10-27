@@ -1,6 +1,8 @@
 import pygame as pg
 from secrets import token_hex
 
+from os import path
+
 from lib.scene import StudentIDInputScene
 
 class EventWrapper:
@@ -24,8 +26,11 @@ class Game:
         self.offline = True
         self.session = str(token_hex(20))
         self.api_url = "https://game-api.sserve.work"
-        with open("secrets", "r", encoding="utf-8") as f:
-            self.api_authkey = f.readline().replace("\n", "")
+        if path.exists("secrets"):
+            with open("secrets", "r", encoding="utf-8") as f:
+                self.api_authkey = f.readline().replace("\n", "")
+        else:
+            self.api_authkey = ""
         
         self.student_grade = None
         self.student_class = None
