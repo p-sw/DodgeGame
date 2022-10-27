@@ -67,10 +67,10 @@ async def get_score(player_id: str = Query(None, title="학번", description="�
             return SingleScoreResponseModel(id=player_id, season=data.season, score=data.score, action=data.action, time=data.time)
         else:
             if season:
-                data = session.query(Score).filter(Score.season == season).all()
+                data = session.query(Score).filter(Score.season == season).order_by(Score.score.desc()).all()
                 return ScoreListResponseModel(scores=[SingleScoreResponseModel(id=i.id, season=i.season, score=i.score, action=i.action, time=i.time) for i in data])
             else:
-                data = session.query(Score).all()
+                data = session.query(Score).order_by(Score.score.desc()).all()
                 return ScoreListResponseModel(scores=[SingleScoreResponseModel(id=i.id, season=i.season, score=i.score, action=i.action, time=i.time) for i in data])
 
 
